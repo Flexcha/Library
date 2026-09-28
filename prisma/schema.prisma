@@ -1,0 +1,218 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                    Int            @id @default(autoincrement())
+  fullName              String         @map("full_name")
+  email                 String         @unique
+  passwordHash          String         @map("password_hash")
+  phone                 String?
+  address               String?
+  role                  String         @default("MEMBER")
+  status                String         @default("ACTIVE")
+  membershipExpiryDate  String?        @map("membership_expiry_date")
+  createdAt             DateTime       @default(now()) @map("created_at")
+  updatedAt             DateTime       @updatedAt @map("updated_at")
+
+  refreshTokens         RefreshToken[]
+  loansAsMember         Loan[]         @relation("MemberLoans")
+  loansAsLibrarian      Loan[]         @relation("LibrarianLoans")
+  reservations          Reservation[]
+  fines                 Fine[]         @relation("MemberFines")
+  waivedFines           Fine[]         @relation("WaivedBy")
+  notifications         Notification[]
+  reviews               Review[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  token      String   @unique
+  expiryDate DateTime @map("expiry_date")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Publisher {
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String?
+  website   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  books     Book[]
+
+  @@map("publishers")
+}
+
+model Category {
+  id               Int        @id @default(autoincrement())
+  name             String     @unique
+  description      String?
+  parentCategoryId Int?       @map("parent_category_id")
+
+  parentCategory   Category?  @relation("SubCategories", fields: [parentCategoryId], references: [id], onDelete: SetNull)
+  subCategories    Category[] @relation("SubCategories")
+  books            Book[]
+
+  @@map("categories")
+}
+
+model Author {
+  id          Int          @id @default(autoincrement())
+  name        String
+  biography   String?
+  birthDate   String?      @map("birth_date")
+  nationality String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  bookAuthors BookAuthor[]
+
+  @@map("authors")
+}
+
+model Book {
+  id              Int          @id @default(autoincrement())
+  isbn            String       @unique
+  title           String
+  subtitle        String?
+  publisherId     Int?         @map("publisher_id")
+  categoryId      Int?         @map("category_id")
+  language        String?      @default("Vietnamese")
+  edition         String?
+  publicationYear Int?         @map("publication_year")
+  pageCount       Int?         @map("page_count")
+  description     String?
+  coverImageUrl   String?      @map("cover_image_url")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  publisher       Publisher?   @relation(fields: [publisherId], references: [id], onDelete: SetNull)
+  category        Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  bookAuthors     BookAuthor[]
+  copies          BookCopy[]
+  reservations    Reservation[]
+  reviews         Review[]
+
+  @@map("books")
+}
+
+model BookAuthor {
+  bookId   Int    @map("book_id")
+  authorId Int    @map("author_id")
+
+  book     Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  author   Author @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@id([bookId, authorId])
+  @@map("book_authors")
+}
+
+model BookCopy {
+  id              Int       @id @default(autoincrement())
+  bookId          Int       @map("book_id")
+  copyCode        String    @unique @map("copy_code")
+  status          String    @default("AVAILABLE")
+  shelfLocation   String?   @map("shelf_location")
+  acquisitionDate String?   @map("acquisition_date")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  book            Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  loans           Loan[]
+
+  @@map("book_copies")
+}
+
+model Loan {
+  id            Int       @id @default(autoincrement())
+  bookCopyId    Int       @map("book_copy_id")
+  memberId      Int       @map("member_id")
+  librarianId   Int       @map("librarian_id")
+  loanDate      String    @map("loan_date")
+  dueDate       String    @map("due_date")
+  returnDate    String?   @map("return_date")
+  status        String    @default("ONGOING")
+  renewalCount  Int       @default(0) @map("renewal_count")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  bookCopy      BookCopy  @relation(fields: [bookCopyId], references: [id])
+  member        User      @relation("MemberLoans", fields: [memberId], references: [id])
+  librarian     User      @relation("LibrarianLoans", fields: [librarianId], references: [id])
+  fines         Fine[]
+
+  @@map("loans")
+}
+
+model Reservation {
+  id              Int       @id @default(autoincrement())
+  bookId          Int       @map("book_id")
+  memberId        Int       @map("member_id")
+  reservationDate DateTime  @default(now()) @map("reservation_date")
+  status          String    @default("PENDING")
+  queuePosition   Int       @map("queue_position")
+  expiryDate      String?   @map("expiry_date")
+
+  book            Book      @relation(fields: [bookId], references: [id])
+  member          User      @relation(fields: [memberId], references: [id])
+
+  @@map("reservations")
+}
+
+model Fine {
+  id         Int       @id @default(autoincrement())
+  loanId     Int       @map("loan_id")
+  memberId   Int       @map("member_id")
+  amount     Float
+  reason     String
+  status     String    @default("UNPAID")
+  issuedDate String    @map("issued_date")
+  paidDate   String?   @map("paid_date")
+  waivedBy   Int?      @map("waived_by")
+
+  loan       Loan      @relation(fields: [loanId], references: [id])
+  member     User      @relation("MemberFines", fields: [memberId], references: [id])
+  waivedUser User?     @relation("WaivedBy", fields: [waivedBy], references: [id])
+
+  @@map("fines")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  type      String
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  bookId    Int      @map("book_id")
+  memberId  Int      @map("member_id")
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  member    User     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, memberId])
+  @@map("reviews")
+}

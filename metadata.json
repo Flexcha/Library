@@ -1,0 +1,6 @@
+{
+  "name": "Library Management System",
+  "description": "Hệ thống Quản lý Thư viện Athenaeum: tra cứu mục lục OPAC, mượn trả tài liệu, quản lý thẻ bạn đọc và danh mục tuyển chọn.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

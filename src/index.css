@@ -1,0 +1,236 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-heading: 'Newsreader', Georgia, Cambria, 'Times New Roman', serif;
+    --font-serif: 'Newsreader', Georgia, Cambria, 'Times New Roman', serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* Authentic Warm Library Palette (Linen, Parchment & Walnut Ink) */
+    --color-canvas: #f8f6f0;
+    --color-canvas-subtle: #f1ede4;
+    --color-surface: #ffffff;
+    --color-surface-elevated: #faf8f5;
+    --color-border: #e6e0d4;
+    --color-border-subtle: #dcd6c8;
+    --color-text-main: #1c1917;
+    --color-text-muted: #57534e;
+    --color-text-faint: #78716c;
+
+    /* Heritage Library Accent Tones */
+    --color-accent: #92400e;        /* Warm Bookbinder Amber / Saddle Leather */
+    --color-accent-hover: #78350f;
+    --color-accent-light: #fef3c7;
+    --color-library-green: #1b4332; /* Oxford / Reading Room Green */
+    --color-library-burgundy: #7f1d1d;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-canvas);
+    color: var(--color-text-main);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, .font-serif-display {
+    font-family: var(--font-heading);
+    letter-spacing: -0.015em;
+  }
+
+  /* Custom classic library paper scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f1ede4;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #d5cebf;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #b0a795;
+  }
+}
+
+/* Serif Typography for Authentic Library Data Display */
+.font-serif-data {
+  font-family: var(--font-heading), Georgia, serif;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.drop-cap::first-letter {
+  font-family: var(--font-heading);
+  float: left;
+  font-size: 3.5rem;
+  line-height: 0.85;
+  padding-right: 0.65rem;
+  padding-top: 0.2rem;
+  font-weight: 700;
+  color: #92400e;
+}
+
+/* Hairline rule divider */
+.hairline-divider {
+  border-bottom: 1px solid rgba(184, 172, 149, 0.4);
+}
+
+/* Subtle Aged Paper Texture Backgrounds */
+.aged-paper {
+  background-color: #faf7ef;
+  background-image: 
+    radial-gradient(ellipse at 50% 30%, rgba(255, 255, 255, 0.75) 0%, rgba(246, 240, 227, 0.45) 100%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 27px,
+      rgba(215, 206, 188, 0.22) 28px
+    );
+  box-shadow: 0 1px 3px rgba(44, 38, 30, 0.04), 0 4px 12px -2px rgba(44, 38, 30, 0.03);
+}
+
+.aged-paper-card {
+  background-color: #fbf9f4;
+  background-image: 
+    radial-gradient(circle at 100% 0%, rgba(245, 239, 226, 0.6) 0%, rgba(255, 255, 255, 0.7) 100%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 23px,
+      rgba(215, 206, 188, 0.15) 24px
+    );
+  border-color: #ded6c5;
+}
+
+.aged-paper-warm {
+  background-color: #f6f1e5;
+  background-image: 
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.6) 0%, rgba(238, 230, 215, 0.5) 100%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 25px,
+      rgba(195, 184, 164, 0.2) 26px
+    );
+  border-color: #d6ccb8;
+}
+
+/* Classic Physical Library Ledger Border-Bottom Treatments */
+.ledger-header {
+  border-bottom: 2px solid #b8ac95;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.ledger-row {
+  border-bottom: 1px solid #e7e0d1;
+  transition: background-color 0.15s ease;
+}
+
+.ledger-row:hover {
+  background-color: #f3ece0;
+}
+
+.ledger-summary-double {
+  border-bottom: 4px double #ad9f88;
+}
+
+.ledger-rule {
+  border-bottom: 1px dashed #d5ccba;
+}
+
+/* Skeleton shimmer pulse animation for library paper cards */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(230, 224, 212, 0.3) 0%,
+    rgba(240, 237, 228, 0.8) 50%,
+    rgba(230, 224, 212, 0.3) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+}
+
+/* Book spine 3D subtle lighting */
+.book-spine-shadow {
+  box-shadow: 
+    -3px 0 6px -2px rgba(0, 0, 0, 0.25),
+    4px 6px 14px -3px rgba(28, 25, 23, 0.16);
+}
+
+.library-card-emboss {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 8px 24px -6px rgba(120, 53, 15, 0.08);
+}
+
+/* Vintage Archival Card Catalog Styles */
+.archival-card {
+  background-color: #faf7ef;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.8) 0%, rgba(246, 240, 227, 0.5) 100%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 25px,
+      rgba(184, 172, 149, 0.18) 26px
+    );
+  border: 1px solid #ded5c2;
+  box-shadow: 0 4px 20px -2px rgba(44, 38, 30, 0.08), 0 1px 4px rgba(44, 38, 30, 0.04);
+}
+
+.archival-stamp {
+  display: inline-block;
+  border: 2px dashed rgba(153, 27, 27, 0.65);
+  color: #991b1b;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  transform: rotate(-2deg);
+  border-radius: 4px;
+  background-color: rgba(254, 242, 242, 0.55);
+}
+
+.archival-stamp-green {
+  display: inline-block;
+  border: 2px dashed rgba(22, 101, 52, 0.65);
+  color: #166534;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  transform: rotate(-1.5deg);
+  border-radius: 4px;
+  background-color: rgba(240, 253, 244, 0.55);
+}
+
+.card-catalog-rod-hole {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #b8ac95;
+  background: radial-gradient(circle, #e2d8c3 40%, #cfc3ab 100%);
+  box-shadow: inset 0 2px 4px rgba(44, 38, 30, 0.3), 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.call-slip-tear {
+  background-image: radial-gradient(circle at 10px -5px, transparent 12px, #faf7ef 13px);
+  background-size: 20px 20px;
+  background-repeat: repeat-x;
+}
