@@ -39,4 +39,10 @@ export class LoanController {
     const result = await LoanService.reportLostOrDamaged(loanId, type, fineAmount);
     return ApiResponse.success(res, result, 'Reported lost/damaged book and generated fine');
   }
+
+  static async updateStatus(req: Request, res: Response) {
+    const loanId = parseInt(req.params.id, 10);
+    const result = await LoanService.changeStatus(loanId, req.body.status);
+    return ApiResponse.success(res, result, 'Loan status updated successfully');
+  }
 }

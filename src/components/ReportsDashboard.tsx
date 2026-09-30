@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client.ts';
 import { DashboardSummary } from '../types/index.ts';
-import { EmptyState } from './common/EmptyState.tsx';
 import {
   BarChart,
   Bar,
@@ -26,17 +25,15 @@ import {
   TrendingUp,
   PieChart as PieChartIcon,
   RefreshCw,
-  Clock,
-  Library,
 } from 'lucide-react';
 
 const STATUS_COLORS: Record<string, string> = {
-  AVAILABLE: '#15803d', // forest green
-  BORROWED: '#92400e', // amber brown
-  RESERVED: '#b45309', // warm amber
-  LOST: '#b91c1c', // red
-  DAMAGED: '#c2410c', // rust orange
-  WITHDRAWN: '#78716c', // archival stone
+  AVAILABLE: '#16a34a',
+  BORROWED: '#2563eb',
+  RESERVED: '#d97706',
+  LOST: '#dc2626',
+  DAMAGED: '#ea580c',
+  WITHDRAWN: '#71717a',
 };
 
 export const ReportsDashboard: React.FC = () => {
@@ -61,7 +58,9 @@ export const ReportsDashboard: React.FC = () => {
       setMostBorrowed(borrowedData.ranking || []);
       setInventory(invData);
     } catch (err: any) {
-      console.error(err);
+      if (err.statusCode !== 403 && err.statusCode !== 401) {
+        console.error(err);
+      }
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -72,7 +71,6 @@ export const ReportsDashboard: React.FC = () => {
     fetchReports();
   }, []);
 
-  // Format most-borrowed data for Recharts BarChart
   const barChartData = mostBorrowed.slice(0, 7).map((item) => ({
     name: item.title.length > 20 ? `${item.title.substring(0, 18)}...` : item.title,
     fullName: item.title,
@@ -80,132 +78,130 @@ export const ReportsDashboard: React.FC = () => {
     isbn: item.isbn,
   }));
 
-  // Format inventory status data for Recharts PieChart
   const pieChartData = inventory?.byStatus
     ? Object.entries(inventory.byStatus as Record<string, number>)
         .filter(([_, count]) => count > 0)
         .map(([status, count]) => ({
           name: status,
           value: count,
-          color: STATUS_COLORS[status] || '#78716c',
+          color: STATUS_COLORS[status] || '#71717a',
         }))
     : [];
 
   return (
     <div className="space-y-6">
-      {/* Title Bar */}
-      <div className="aged-paper border border-[#ded5c2] rounded-lg p-6 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Page Header */}
+      <div className="ui-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-white/10">
         <div>
-          <div className="flex items-center gap-2 text-[#92400e] text-xs font-semibold uppercase tracking-wider mb-1 font-serif">
-            <Library className="w-4 h-4" />
-            <span>Phân Tích Thư Viện &amp; Thống Kê Giám Tuyển</span>
+          <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-1">
+            <BarChart3 className="w-4 h-4" />
+            <span>Báo Cáo & Thống Kê</span>
           </div>
-          <h1 className="text-2xl font-bold text-stone-900 font-serif-display tracking-tight">
-            Bảng Điều Khiển Lưu Hành &amp; Vận Hành
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Bảng Điều Khiển Quản Lý Thư Viện
           </h1>
-          <p className="text-xs sm:text-sm text-stone-600 mt-1 font-serif-data">
-            Chỉ số lưu hành thời gian thực, mức độ khai thác bộ sưu tập và theo dõi các khoản mượn quá hạn
+          <p className="text-sm text-slate-400 mt-1">
+            Tổng hợp dữ liệu lưu thông, danh mục mượn phổ biến và theo dõi tình trạng kho sách.
           </p>
         </div>
         <button
           type="button"
           onClick={fetchReports}
           disabled={isRefreshing}
-          className="px-4 py-2 bg-[#fcfbf7] hover:bg-[#f2ece0] disabled:opacity-50 text-stone-800 text-xs font-medium rounded transition border border-[#d5ccba] self-start sm:self-auto flex items-center space-x-1.5 cursor-pointer shadow-2xs font-serif-data"
+          className="btn-secondary self-start sm:self-auto text-xs rounded-lg"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          <span>{isRefreshing ? 'Đang tính toán...' : 'Làm Mới Thống Kê'}</span>
+          <span>Làm mới dữ liệu</span>
         </button>
       </div>
 
-      {/* KPI Stats Grid */}
+      {/* Metric Cards Grid */}
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="aged-paper-card border border-[#ded5c2] p-4 rounded-lg h-24 animate-shimmer" />
+            <div key={i} className="h-24 bg-slate-800/50 border border-slate-700/40 rounded-xl animate-pulse" />
           ))}
         </div>
       ) : summary ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 font-serif-data">
-          <div className="aged-paper-card border border-[#ded5c2] p-4 rounded-lg shadow-2xs">
-            <div className="flex items-center justify-between text-[#92400e] mb-1.5">
-              <span className="text-[11px] font-semibold text-stone-700 font-serif">Sách Đang Mượn</span>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="ui-card p-4 space-y-1 border border-white/10">
+            <div className="flex items-center justify-between text-indigo-400">
+              <span className="text-xs font-medium text-slate-400">Đang mượn</span>
               <BookOpen className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold text-stone-900 font-serif-display">
+            <div className="text-2xl font-bold text-white">
               {summary.activeLoans}
             </div>
           </div>
 
-          <div className="aged-paper-card border border-[#ded5c2] p-4 rounded-lg shadow-2xs">
-            <div className="flex items-center justify-between text-red-700 mb-1.5">
-              <span className="text-[11px] font-semibold text-stone-700 font-serif">Sách Quá Hạn</span>
+          <div className="ui-card p-4 space-y-1 border border-white/10">
+            <div className="flex items-center justify-between text-rose-400">
+              <span className="text-xs font-medium text-slate-400">Sách quá hạn</span>
               <AlertTriangle className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold text-red-700 font-serif-display">
+            <div className="text-2xl font-bold text-rose-400">
               {summary.overdueLoans}
             </div>
           </div>
 
-          <div className="aged-paper-card border border-[#ded5c2] p-4 rounded-lg shadow-2xs">
-            <div className="flex items-center justify-between text-amber-900 mb-1.5">
-              <span className="text-[11px] font-semibold text-stone-700 font-serif">Hàng Đợi Đặt</span>
+          <div className="ui-card p-4 space-y-1 border border-white/10">
+            <div className="flex items-center justify-between text-amber-400">
+              <span className="text-xs font-medium text-slate-400">Hàng đợi</span>
               <Layers className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold text-stone-900 font-serif-display">
+            <div className="text-2xl font-bold text-white">
               {summary.pendingReservations}
             </div>
           </div>
 
-          <div className="aged-paper-card border border-[#ded5c2] p-4 rounded-lg shadow-2xs">
-            <div className="flex items-center justify-between text-red-700 mb-1.5">
-              <span className="text-[11px] font-semibold text-stone-700 font-serif">Tiền Phạt Chưa Thu</span>
+          <div className="ui-card p-4 space-y-1 border border-white/10">
+            <div className="flex items-center justify-between text-rose-400">
+              <span className="text-xs font-medium text-slate-400">Phần phạt chưa thu</span>
               <CreditCard className="w-4 h-4" />
             </div>
-            <div className="text-sm font-bold text-stone-900 font-serif truncate">
-              {Number(summary.unpaidFinesTotal).toLocaleString()} VND
+            <div className="text-sm font-bold text-rose-400 truncate mt-1">
+              {Number(summary.unpaidFinesTotal).toLocaleString()} VNĐ
             </div>
           </div>
 
-          <div className="aged-paper-card border border-[#ded5c2] p-4 rounded-lg shadow-2xs">
-            <div className="flex items-center justify-between text-stone-600 mb-1.5">
-              <span className="text-[11px] font-semibold text-stone-700 font-serif">Tựa Sách Mục Lục</span>
+          <div className="ui-card p-4 space-y-1 border border-white/10">
+            <div className="flex items-center justify-between text-indigo-400">
+              <span className="text-xs font-medium text-slate-400">Đầu sách</span>
               <BookOpen className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold text-stone-900 font-serif-display">
+            <div className="text-2xl font-bold text-white">
               {summary.totalBooks}
             </div>
           </div>
 
-          <div className="aged-paper-card border border-[#ded5c2] p-4 rounded-lg shadow-2xs">
-            <div className="flex items-center justify-between text-emerald-800 mb-1.5">
-              <span className="text-[11px] font-semibold text-stone-700 font-serif">Độc Giả Đăng Ký</span>
+          <div className="ui-card p-4 space-y-1 border border-white/10">
+            <div className="flex items-center justify-between text-emerald-400">
+              <span className="text-xs font-medium text-slate-400">Bạn đọc</span>
               <Users className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold text-stone-900 font-serif-display">
+            <div className="text-2xl font-bold text-white">
               {summary.totalMembers}
             </div>
           </div>
         </div>
       ) : null}
 
-      {/* Visual Analytics Section: Charts via Recharts */}
+      {/* Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Most Borrowed Books Bar Chart */}
-        <div className="aged-paper-card border border-[#ded5c2] rounded-lg p-5 shadow-2xs space-y-4 font-serif-data">
-          <div className="flex items-center justify-between border-b-2 border-[#b8ac95] pb-3">
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="w-4 h-4 text-[#92400e]" />
-              <h2 className="font-bold text-stone-900 text-base font-serif-display">
-                Tựa Sách Được Mượn Nhiều Nhất (30 Ngày Qua)
+        {/* Most Borrowed Chart */}
+        <div className="ui-card p-5 space-y-4 border border-white/10">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-indigo-400" />
+              <h2 className="font-bold text-white text-base">
+                Sách Mượn Nhiều Nhất (30 Ngày)
               </h2>
             </div>
-            <span className="text-[11px] text-stone-600 font-serif-data">Tần Suất Lưu Hành</span>
           </div>
 
           {barChartData.length === 0 ? (
-            <div className="py-16 text-center text-xs text-stone-500 font-serif-data">
-              Không có dữ liệu mượn sách nào được ghi nhận trong 30 ngày qua.
+            <div className="py-16 text-center text-xs text-slate-400">
+              Chưa có dữ liệu lượt mượn trong 30 ngày qua.
             </div>
           ) : (
             <div className="h-64 w-full">
@@ -213,53 +209,46 @@ export const ReportsDashboard: React.FC = () => {
                 <BarChart data={barChartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                   <XAxis
                     dataKey="name"
-                    tick={{ fill: '#78716c', fontSize: 11 }}
-                    angle={-25}
+                    tick={{ fill: '#94a3b8', fontSize: 11 }}
+                    angle={-20}
                     textAnchor="end"
                     interval={0}
                   />
-                  <YAxis tick={{ fill: '#78716c', fontSize: 11 }} allowDecimals={false} />
+                  <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#fbf9f5',
-                      borderColor: '#dcd6c8',
-                      borderRadius: '0.375rem',
-                      color: '#1c1917',
+                      backgroundColor: '#0f172a',
+                      borderColor: 'rgba(255,255,255,0.15)',
+                      borderRadius: '0.5rem',
+                      color: '#ffffff',
                       fontSize: '12px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
                     }}
-                    formatter={(value: any) => [`${value} lượt mượn`, 'Tổng số lượt']}
-                    labelFormatter={(_label, payload) => {
-                      if (payload && payload.length > 0) {
-                        return payload[0].payload.fullName;
-                      }
-                      return _label;
-                    }}
+                    formatter={(value: any) => [`${value} lượt mượn`, 'Lượt mượn']}
                   />
-                  <Bar dataKey="borrows" fill="#92400e" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="borrows" fill="#6366f1" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           )}
         </div>
 
-        {/* Physical Inventory Distribution Donut / Pie Chart */}
-        <div className="aged-paper-card border border-[#ded5c2] rounded-lg p-5 shadow-2xs space-y-4 font-serif-data">
-          <div className="flex items-center justify-between border-b-2 border-[#b8ac95] pb-3">
-            <div className="flex items-center space-x-2">
-              <PieChartIcon className="w-4 h-4 text-[#92400e]" />
-              <h2 className="font-bold text-stone-900 text-base font-serif-display">
-                Phân Bố Trạng Thái Kho Sách
+        {/* Inventory Status Donut */}
+        <div className="ui-card p-5 space-y-4 border border-white/10">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="flex items-center gap-2">
+              <PieChartIcon className="w-4 h-4 text-indigo-400" />
+              <h2 className="font-bold text-white text-base">
+                Trạng Thái Bản Sao Vật Lý
               </h2>
             </div>
-            <span className="text-[11px] text-stone-600 font-serif-data">
-              Tổng số: {inventory?.totalCopies || 0} cuốn
+            <span className="text-xs text-slate-400">
+              Tổng: {inventory?.totalCopies || 0} bản
             </span>
           </div>
 
           {pieChartData.length === 0 ? (
-            <div className="py-16 text-center text-xs text-stone-500 font-serif-data">
-              Chưa có dữ liệu bản sách vật lý.
+            <div className="py-16 text-center text-xs text-slate-400">
+              Chưa có dữ liệu bản sao.
             </div>
           ) : (
             <div className="h-64 w-full flex items-center justify-center">
@@ -275,34 +264,17 @@ export const ReportsDashboard: React.FC = () => {
                     dataKey="value"
                   >
                     {pieChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="#fbf9f5" strokeWidth={2} />
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="#0f172a" strokeWidth={2} />
                     ))}
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#fbf9f5',
-                      borderColor: '#dcd6c8',
-                      borderRadius: '0.375rem',
-                      color: '#1c1917',
+                      backgroundColor: '#0f172a',
+                      borderColor: 'rgba(255,255,255,0.15)',
+                      borderRadius: '0.5rem',
+                      color: '#ffffff',
                       fontSize: '12px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
                     }}
-                    formatter={(value: any, name: any) => [
-                      `${value} cuốn`,
-                      name === 'AVAILABLE'
-                        ? 'Có sẵn trên giá'
-                        : name === 'BORROWED'
-                        ? 'Đang được mượn'
-                        : name === 'RESERVED'
-                        ? 'Đang giữ cho bạn đọc'
-                        : name === 'LOST'
-                        ? 'Thất lạc'
-                        : name === 'DAMAGED'
-                        ? 'Hư hỏng'
-                        : name === 'WITHDRAWN'
-                        ? 'Rút khỏi lưu hành'
-                        : name,
-                    ]}
                   />
                   <Legend
                     verticalAlign="bottom"
@@ -319,7 +291,7 @@ export const ReportsDashboard: React.FC = () => {
                         : val === 'DAMAGED'
                         ? 'Hư hỏng'
                         : val;
-                      return <span className="text-xs text-stone-700 font-serif font-medium">{label}</span>;
+                      return <span className="text-xs text-slate-300">{label}</span>;
                     }}
                   />
                 </PieChart>
@@ -329,56 +301,49 @@ export const ReportsDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Overdue Loans Follow-up Desk */}
-      <div className="aged-paper border border-[#ded5c2] rounded-lg p-5 shadow-2xs space-y-4 font-serif-data">
-        <div className="flex items-center justify-between border-b-2 border-[#b8ac95] pb-3">
-          <div className="flex items-center space-x-2">
-            <AlertTriangle className="w-4 h-4 text-red-700" />
-            <h2 className="font-bold text-stone-900 text-base font-serif-display">
-              Bàn Theo Dõi &amp; Nhắc Trả Sách Quá Hạn
+      {/* Overdue Section */}
+      <div className="ui-card p-5 space-y-4 border border-white/10">
+        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-400" />
+            <h2 className="font-bold text-white text-base">
+              Danh Sách Bạn Đọc Trả Sách Quá Hạn
             </h2>
           </div>
-          <span className="text-xs font-serif text-red-700 font-bold">
-            {overdueList.length} tài khoản quá hạn
+          <span className="text-xs font-semibold text-rose-400">
+            {overdueList.length} trường hợp quá hạn
           </span>
         </div>
 
-        <div className="divide-y divide-[#e7dfcf] text-xs font-serif-data">
+        <div className="divide-y divide-white/10 text-xs">
           {overdueList.length === 0 ? (
-            <div className="py-8 text-center text-xs text-stone-500 font-serif-data">
-              Tất cả các lượt mượn đang trong thời hạn cho phép. Không có sách quá hạn.
+            <div className="py-8 text-center text-xs text-slate-400">
+              Hiện không có khoản mượn nào quá hạn.
             </div>
           ) : (
             overdueList.map((item) => (
-              <div key={item.loanId} className="py-3 space-y-1.5 ledger-row">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h4 className="font-bold text-stone-900 font-serif text-sm">
-                      {item.bookTitle}
-                    </h4>
-                    <p className="font-mono text-[11px] text-stone-700 mt-0.5">
-                      Mã bản: <span className="bg-[#f4eee2] px-1 rounded border border-[#ded5c2]">{item.copyCode}</span> · Hạn trả: <strong className="text-red-700 font-bold font-serif">{item.dueDate}</strong>
-                    </p>
-                  </div>
-                  <span className="text-[11px] font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded border border-red-200 shrink-0 font-mono">
-                    QUÁ HẠN
-                  </span>
+              <div key={item.loanId} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-semibold text-white text-sm">
+                    {item.bookTitle}
+                  </h4>
+                  <p className="text-slate-400 mt-0.5">
+                    Mã bản sao: <span className="font-mono text-indigo-300">{item.copyCode}</span> · Hạn trả: <strong className="text-rose-400">{item.dueDate}</strong>
+                  </p>
                 </div>
 
-                <div className="bg-[#fcfbf7] p-2.5 rounded border border-[#ded5c2] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-stone-700 shadow-2xs">
-                  <span className="font-bold text-stone-900 font-serif">{item.member.fullName}</span>
-                  <div className="flex items-center space-x-3 text-stone-600 text-[11px] font-sans">
-                    {item.member.phone && (
-                      <span className="flex items-center space-x-1">
-                        <Phone className="w-3 h-3 text-[#92400e]" />
-                        <span className="font-mono">{item.member.phone}</span>
-                      </span>
-                    )}
-                    <span className="flex items-center space-x-1">
-                      <Mail className="w-3 h-3 text-stone-500" />
-                      <span>{item.member.email}</span>
+                <div className="flex items-center gap-4 text-xs text-slate-300">
+                  <span className="font-semibold text-white">{item.member.fullName}</span>
+                  {item.member.phone && (
+                    <span className="flex items-center gap-1 font-mono text-slate-400">
+                      <Phone className="w-3 h-3" />
+                      <span>{item.member.phone}</span>
                     </span>
-                  </div>
+                  )}
+                  <span className="flex items-center gap-1 text-slate-400">
+                    <Mail className="w-3 h-3" />
+                    <span>{item.member.email}</span>
+                  </span>
                 </div>
               </div>
             ))
@@ -388,3 +353,4 @@ export const ReportsDashboard: React.FC = () => {
     </div>
   );
 };
+

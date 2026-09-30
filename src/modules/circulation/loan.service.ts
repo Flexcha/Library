@@ -25,18 +25,29 @@ export class LoanService {
   static async checkout(data: CheckoutInput, librarianId: number) {
     return prisma.$transaction(async (tx) => {
       // 1. Validate copy exists and is AVAILABLE
-      const copy = await tx.bookCopy.findUnique({
-        where: { id: data.bookCopyId },
-        include: { book: true },
-      });
+      const copy = data.copyCode
+        ? await tx.bookCopy.findUnique({
+            where: { copyCode: data.copyCode.trim() },
+            include: { book: true },
+          })
+        : data.bookCopyId
+        ? await tx.bookCopy.findUnique({
+            where: { id: data.bookCopyId },
+            include: { book: true },
+          })
+        : null;
 
       if (!copy) {
-        throw new NotFoundError(`Book copy with id ${data.bookCopyId} not found`);
+        throw new NotFoundError(
+          data.copyCode
+            ? `Bản sách với mã vạch "${data.copyCode}" không tồn tại trong hệ thống`
+            : `Book copy with id ${data.bookCopyId} not found`
+        );
       }
 
       if (copy.status !== 'AVAILABLE') {
         throw new ConflictError(
-          `Copy ${copy.copyCode} is not available (status=${copy.status})`,
+          `Bản sao sách mã "${copy.copyCode}" hiện không ở trạng thái có sẵn cho mượn (Trạng thái: ${copy.status}).`,
           'COPY_NOT_AVAILABLE'
         );
       }
@@ -47,12 +58,12 @@ export class LoanService {
       });
 
       if (!member) {
-        throw new NotFoundError(`Member with id ${data.memberId} not found`);
+        throw new NotFoundError(`Không tìm thấy thông tin độc giả trong hệ thống.`);
       }
 
       if (member.status !== 'ACTIVE') {
         throw new ForbiddenError(
-          `Member ${member.fullName} is ${member.status.toLowerCase()} and cannot borrow books`,
+          `Tài khoản bạn đọc "${member.fullName}" hiện đang bị tạm khóa hoặc vô hiệu hóa, không thể mượn sách.`,
           'MEMBER_BLOCKED'
         );
       }
@@ -68,7 +79,7 @@ export class LoanService {
       const totalUnpaidFines = unpaidFines.reduce((sum, f) => sum + f.amount, 0);
       if (totalUnpaidFines >= env.FINE_MAX_UNPAID_BEFORE_BLOCK) {
         throw new ForbiddenError(
-          `Member has unpaid fines (${totalUnpaidFines.toLocaleString()} VND) exceeding block threshold (${env.FINE_MAX_UNPAID_BEFORE_BLOCK.toLocaleString()} VND)`,
+          `Tài khoản bạn đọc "${member.fullName}" đang có tổng tiền phạt quá hạn chưa trả là ${totalUnpaidFines.toLocaleString('vi-VN')} VNĐ (vượt quá hạn mức tối đa ${env.FINE_MAX_UNPAID_BEFORE_BLOCK.toLocaleString('vi-VN')} VNĐ). Vui lòng hoàn tất nộp phạt trước khi mượn sách mới.`,
           'MEMBER_BLOCKED'
         );
       }
@@ -466,6 +477,44 @@ export class LoanService {
         status: 'LOST',
         fine,
       };
+    });
+  }
+
+  static async changeStatus(loanId: number, newStatus: string) {
+    return prisma.$transaction(async (tx) => {
+      const loan = await tx.loan.findUnique({
+        where: { id: loanId },
+        include: { bookCopy: true },
+      });
+      if (!loan) {
+        throw new NotFoundError(`Loan with id ${loanId} not found`);
+      }
+
+      const today = formatDate(new Date());
+      let copyStatus = 'BORROWED';
+      let returnDate: string | null = loan.returnDate;
+
+      if (newStatus === 'RETURNED') {
+        copyStatus = 'AVAILABLE';
+        returnDate = today;
+      } else if (newStatus === 'LOST') {
+        copyStatus = 'LOST';
+      } else if (newStatus === 'ONGOING' || newStatus === 'OVERDUE') {
+        copyStatus = 'BORROWED';
+        returnDate = null;
+      }
+
+      const updatedLoan = await tx.loan.update({
+        where: { id: loanId },
+        data: { status: newStatus, returnDate },
+      });
+
+      await tx.bookCopy.update({
+        where: { id: loan.bookCopyId },
+        data: { status: copyStatus },
+      });
+
+      return updatedLoan;
     });
   }
 }

@@ -14,6 +14,7 @@ router.post('/', authorize('ADMIN', 'LIBRARIAN'), validate({ body: checkoutSchem
 router.get('/', validate({ query: loanQuerySchema }), asyncHandler(LoanController.list));
 router.get('/:id', asyncHandler(LoanController.getById));
 router.patch('/:id/return', authorize('ADMIN', 'LIBRARIAN'), asyncHandler(LoanController.returnLoan));
+router.patch('/:id/status', authorize('ADMIN', 'LIBRARIAN'), asyncHandler(LoanController.updateStatus));
 router.post('/:id/renew', asyncHandler(LoanController.renew));
 router.post('/:id/lost', authorize('ADMIN', 'LIBRARIAN'), validate({ body: reportLostSchema }), asyncHandler(LoanController.reportLost));
 

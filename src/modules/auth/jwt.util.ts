@@ -7,7 +7,7 @@ export interface AuthUserPayload {
   sub: number;
   id: number;
   email: string;
-  role: 'ADMIN' | 'LIBRARIAN' | 'MEMBER';
+  role: 'SUPERADMIN' | 'ADMIN' | 'LIBRARIAN' | 'MEMBER';
 }
 
 export class JwtUtil {

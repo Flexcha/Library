@@ -27,7 +27,8 @@ export const validate = (targets: ValidationTargets | ZodSchema<any>) => {
           message: issue.message,
           rule: issue.code,
         }));
-        return next(new ValidationError('Request validation failed', details));
+        const firstError = details[0] ? `: ${details[0].field} (${details[0].message})` : '';
+        return next(new ValidationError(`Dữ liệu gửi lên không hợp lệ${firstError}`, details));
       }
       next(err);
     }

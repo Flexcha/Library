@@ -1,49 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { useToast } from '../context/ToastContext.tsx';
-import { LogIn, UserPlus, RotateCw, X, Library } from 'lucide-react';
+import { LogIn, UserPlus, RotateCw, X, BookOpen, Zap, Eye, EyeOff } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const EMPTY_FORM = {
+  email: '',
+  password: '',
+  fullName: '',
+  phone: '',
+  address: '',
+};
+
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const { login, register } = useAuth();
   const toast = useToast();
+
   const [isRegister, setIsRegister] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [showPwd, setShowPwd] = useState(false);
 
-  // Form states
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
+  const [form, setForm] = useState(EMPTY_FORM);
+
+  // Reset toàn bộ form mỗi khi modal mở lại
+  useEffect(() => {
+    if (isOpen) {
+      setForm(EMPTY_FORM);
+      setFormErrors({});
+      setIsRegister(false);
+      setShowPwd(false);
+      setSubmitting(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
+  const setField = (field: keyof typeof EMPTY_FORM) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(f => ({ ...f, [field]: e.target.value }));
+    setFormErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!email.trim()) {
+    if (!form.email.trim()) {
       errs.email = 'Vui lòng nhập địa chỉ email';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      errs.email = 'Vui lòng nhập định dạng email hợp lệ';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      errs.email = 'Định dạng email không hợp lệ';
     }
-
-    if (!password) {
+    if (!form.password) {
       errs.password = 'Vui lòng nhập mật khẩu';
-    } else if (password.length < 6) {
+    } else if (form.password.length < 6) {
       errs.password = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
-
-    if (isRegister) {
-      if (!fullName.trim()) {
-        errs.fullName = 'Vui lòng nhập họ và tên';
-      }
+    if (isRegister && !form.fullName.trim()) {
+      errs.fullName = 'Vui lòng nhập họ và tên';
     }
-
     setFormErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -51,167 +67,170 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-
     setSubmitting(true);
     try {
       if (isRegister) {
         await register({
-          fullName: fullName.trim(),
-          email: email.trim(),
-          password,
-          phone: phone.trim() || undefined,
-          address: address.trim() || undefined,
+          fullName: form.fullName.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          phone: form.phone.trim() || undefined,
+          address: form.address.trim() || undefined,
         });
-        toast.success(`Chào mừng bạn đến với Thư viện Athenaeum, ${fullName.trim()}!`, 'Đăng Ký Thành Công');
+        toast.success(`Chào mừng ${form.fullName.trim()} đến với LibraryOS!`, 'Đăng ký thành công');
       } else {
-        await login(email.trim(), password);
-        toast.success('Đăng nhập thành công!', 'Chào Mừng Trở Lại');
+        await login(form.email.trim(), form.password);
+        toast.success('Đăng nhập thành công!', 'Chào mừng trở lại');
       }
       onClose();
     } catch (err: any) {
-      toast.error(err.message || 'Xác thực không thành công. Vui lòng kiểm tra lại thông tin.');
+      toast.error(err.message || 'Xác thực không thành công. Kiểm tra lại thông tin.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleFillDemo = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
+    setForm(f => ({ ...f, email: demoEmail, password: demoPass }));
     setIsRegister(false);
     setFormErrors({});
   };
 
+  const switchTab = (toRegister: boolean) => {
+    setIsRegister(toRegister);
+    setForm(EMPTY_FORM);
+    setFormErrors({});
+    setShowPwd(false);
+  };
+
+  const inputBase = 'ui-input bg-slate-900 border-slate-700 text-white rounded-lg w-full';
+  const errCls = (field: string) => formErrors[field] ? 'border-rose-500' : '';
+
   return (
-    <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="aged-paper border border-[#ded5c2] rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4 my-8 relative font-serif-data">
+    <div
+      className="fixed inset-0 flex items-center justify-center p-4 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="relative max-w-md w-full bg-[#0d1322] border border-white/10 rounded-2xl p-6 space-y-5 shadow-2xl">
+        {/* Close button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 text-stone-400 hover:text-stone-700 p-1 rounded-lg cursor-pointer"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
-        {/* Library seal */}
-        <div className="flex items-center gap-2 text-[#92400e] text-xs font-semibold uppercase tracking-wider mb-1 font-serif">
-          <Library className="w-4 h-4" />
-          <span>Thư Viện Athenaeum</span>
+        {/* Logo Header */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
+            <BookOpen className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-white font-bold text-base tracking-tight">LibraryOS</div>
+            <div className="text-slate-400 text-xs">Hệ thống Quản lý Thư viện</div>
+          </div>
         </div>
 
-        {/* Tab switch */}
-        <div className="flex border-b-2 border-[#b8ac95] pb-2 space-x-6">
-          <button
-            type="button"
-            onClick={() => {
-              setIsRegister(false);
-              setFormErrors({});
-            }}
-            className={`font-serif-display font-bold text-lg pb-1 transition border-b-2 cursor-pointer ${
-              !isRegister
-                ? 'border-[#92400e] text-stone-900'
-                : 'border-transparent text-stone-500 hover:text-stone-800'
-            }`}
-          >
-            Độc Giả Đăng Nhập
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIsRegister(true);
-              setFormErrors({});
-            }}
-            className={`font-serif-display font-bold text-lg pb-1 transition border-b-2 cursor-pointer ${
-              isRegister
-                ? 'border-[#92400e] text-stone-900'
-                : 'border-transparent text-stone-500 hover:text-stone-800'
-            }`}
-          >
-            Đăng Ký Thẻ Độc Giả
-          </button>
+        {/* Switcher Tabs */}
+        <div className="flex p-1 bg-slate-900/90 border border-white/10 rounded-xl gap-1">
+          {[
+            { label: 'Đăng nhập', value: false },
+            { label: 'Đăng ký',   value: true  },
+          ].map(({ label, value }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => switchTab(value)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                isRegister === value
+                  ? 'text-white bg-indigo-600 shadow-md font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-3.5 text-xs">
+        {/* Form */}
+        <form onSubmit={handleSubmit} noValidate className="space-y-3">
+          {/* Họ tên — chỉ khi đăng ký */}
           {isRegister && (
             <div>
-              <label className="block text-stone-800 font-serif font-semibold mb-1">Họ và Tên *</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Họ và tên *</label>
               <input
                 type="text"
-                value={fullName}
-                onChange={(e) => {
-                  setFullName(e.target.value);
-                  if (formErrors.fullName) setFormErrors({ ...formErrors, fullName: '' });
-                }}
+                value={form.fullName}
+                onChange={setField('fullName')}
                 placeholder="Nguyễn Văn An"
-                className={`w-full px-3 py-2 bg-[#fcfbf7] border rounded text-stone-900 focus:outline-none font-serif ${
-                  formErrors.fullName ? 'border-red-500' : 'border-[#d5ccba] focus:border-[#92400e]'
-                }`}
+                className={`${inputBase} ${errCls('fullName')}`}
+                autoFocus={isRegister}
               />
-              {formErrors.fullName && (
-                <p className="text-[11px] text-red-600 mt-1">{formErrors.fullName}</p>
-              )}
+              {formErrors.fullName && <p className="text-xs text-rose-400 mt-1">{formErrors.fullName}</p>}
             </div>
           )}
 
+          {/* Email */}
           <div>
-            <label className="block text-stone-800 font-serif font-semibold mb-1">Địa Chỉ Email *</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Email *</label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (formErrors.email) setFormErrors({ ...formErrors, email: '' });
-              }}
-              placeholder="docgia@thuvien.edu.vn"
-              className={`w-full px-3 py-2 bg-[#fcfbf7] border rounded text-stone-900 focus:outline-none font-serif ${
-                formErrors.email ? 'border-red-500' : 'border-[#d5ccba] focus:border-[#92400e]'
-              }`}
+              value={form.email}
+              onChange={setField('email')}
+              placeholder="email@example.com"
+              className={`${inputBase} ${errCls('email')}`}
+              autoFocus={!isRegister}
+              autoComplete="email"
             />
-            {formErrors.email && (
-              <p className="text-[11px] text-red-600 mt-1">{formErrors.email}</p>
-            )}
+            {formErrors.email && <p className="text-xs text-rose-400 mt-1">{formErrors.email}</p>}
           </div>
 
+          {/* Mật khẩu */}
           <div>
-            <label className="block text-stone-800 font-serif font-semibold mb-1">Mật Khẩu *</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (formErrors.password) setFormErrors({ ...formErrors, password: '' });
-              }}
-              placeholder="••••••••"
-              className={`w-full px-3 py-2 bg-[#fcfbf7] border rounded text-stone-900 focus:outline-none ${
-                formErrors.password ? 'border-red-500' : 'border-[#d5ccba] focus:border-[#92400e]'
-              }`}
-            />
-            {formErrors.password && (
-              <p className="text-[11px] text-red-600 mt-1">{formErrors.password}</p>
-            )}
+            <label className="block text-xs font-medium text-slate-300 mb-1">Mật khẩu *</label>
+            <div className="relative">
+              <input
+                type={showPwd ? 'text' : 'password'}
+                value={form.password}
+                onChange={setField('password')}
+                placeholder="••••••••"
+                className={`${inputBase} ${errCls('password')} pr-10`}
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition cursor-pointer"
+                tabIndex={-1}
+              >
+                {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {formErrors.password && <p className="text-xs text-rose-400 mt-1">{formErrors.password}</p>}
           </div>
 
+          {/* Phone & Address — chỉ khi đăng ký */}
           {isRegister && (
             <>
               <div>
-                <label className="block text-stone-800 font-serif font-semibold mb-1">Số Điện Thoại</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Số điện thoại</label>
                 <input
                   type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  value={form.phone}
+                  onChange={setField('phone')}
                   placeholder="0901 234 567"
-                  className="w-full px-3 py-2 bg-[#fcfbf7] border border-[#d5ccba] rounded text-stone-900 focus:outline-none focus:border-[#92400e] font-serif"
+                  className={inputBase}
                 />
               </div>
-
               <div>
-                <label className="block text-stone-800 font-serif font-semibold mb-1">Địa Chỉ Thường Trú</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Địa chỉ</label>
                 <input
                   type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Số 124 Đường Thư Viện, Quận 1, TP. Hồ Chí Minh"
-                  className="w-full px-3 py-2 bg-[#fcfbf7] border border-[#d5ccba] rounded text-stone-900 focus:outline-none focus:border-[#92400e] font-serif"
+                  value={form.address}
+                  onChange={setField('address')}
+                  placeholder="Địa chỉ thường trú"
+                  className={inputBase}
                 />
               </div>
             </>
@@ -220,56 +239,53 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-2.5 bg-[#92400e] hover:bg-[#78350f] disabled:opacity-50 text-white font-serif font-bold rounded transition shadow-xs flex items-center justify-center space-x-1.5 cursor-pointer mt-4"
+            className="btn-primary w-full py-2.5 text-sm mt-2 disabled:opacity-60 rounded-xl"
           >
             {submitting ? (
               <>
                 <RotateCw className="w-4 h-4 animate-spin" />
-                <span>{isRegister ? 'Đang cấp thẻ độc giả...' : 'Đang xác thực...'}</span>
+                <span>{isRegister ? 'Đang đăng ký...' : 'Đang đăng nhập...'}</span>
               </>
             ) : isRegister ? (
               <>
                 <UserPlus className="w-4 h-4" />
-                <span>Cấp Thẻ Độc Giả &amp; Đăng Ký</span>
+                <span>Đăng ký tài khoản</span>
               </>
             ) : (
               <>
                 <LogIn className="w-4 h-4" />
-                <span>Vào Thư Viện</span>
+                <span>Đăng nhập</span>
               </>
             )}
           </button>
         </form>
 
-        {/* Demo Fast Fill Pill Bar */}
-        <div className="pt-3 border-t-2 border-[#b8ac95]">
-          <p className="text-[11px] text-stone-600 font-serif font-medium mb-2 text-center">
-            Đăng nhập nhanh bằng tài khoản mẫu:
-          </p>
-          <div className="grid grid-cols-3 gap-2 text-[11px]">
-            <button
-              type="button"
-              onClick={() => handleFillDemo('admin@library.com', 'Admin123!')}
-              className="p-1.5 bg-[#fcfbf7] hover:bg-[#f2ece0] border border-[#d5ccba] rounded text-[#92400e] font-serif font-bold text-center transition cursor-pointer shadow-2xs"
-            >
-              Quản Trị Viên
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFillDemo('librarian@library.com', 'Librarian123!')}
-              className="p-1.5 bg-[#fcfbf7] hover:bg-[#f2ece0] border border-[#d5ccba] rounded text-stone-800 font-serif font-bold text-center transition cursor-pointer shadow-2xs"
-            >
-              Thủ Thư
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFillDemo('member1@library.com', 'Member123!')}
-              className="p-1.5 bg-[#fcfbf7] hover:bg-[#f2ece0] border border-[#d5ccba] rounded text-stone-800 font-serif font-bold text-center transition cursor-pointer shadow-2xs"
-            >
-              Độc Giả
-            </button>
+        {/* Quick Demo Selector */}
+        {!isRegister && (
+          <div className="pt-3 border-t border-white/10">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <p className="text-xs text-slate-400 font-medium">Đăng nhập tài khoản mẫu:</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: '👑 SuperAdmin', email: 'superadmin@library.com', pass: 'SuperAdmin123!' },
+                { label: '🛡 Admin',      email: 'admin@library.com',      pass: 'Admin123!'      },
+                { label: '📚 Thủ thư',   email: 'librarian@library.com',  pass: 'Librarian123!'  },
+                { label: '👤 Bạn đọc',   email: 'member1@library.com',    pass: 'Member123!'     },
+              ].map(({ label, email: e, pass }) => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => handleFillDemo(e, pass)}
+                  className="btn-secondary py-1.5 text-xs px-2 rounded-lg text-left truncate"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

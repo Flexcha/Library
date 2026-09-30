@@ -7,6 +7,7 @@ export async function seedDatabase() {
   console.log('🌱 Seeding Athenaeum Library database with comprehensive, authentic library data...');
 
   // Standard demo passwords for quick login/testing
+  const superadminPassword = await bcrypt.hash('SuperAdmin123!', 10);
   const adminPassword = await bcrypt.hash('Admin123!', 10);
   const librarianPassword = await bcrypt.hash('Librarian123!', 10);
   const memberPassword = await bcrypt.hash('Member123!', 10);
@@ -14,11 +15,26 @@ export async function seedDatabase() {
   // =========================================================================
   // 1. PATRONS & STAFF ACCOUNTS
   // =========================================================================
+  // SUPERADMIN — toàn quyền hệ thống, có thể quản lý tất cả kể cả ADMIN
+  await prisma.user.upsert({
+    where: { email: 'superadmin@library.com' },
+    update: { fullName: 'Hệ Thống Quản Trị Cấp Cao', passwordHash: superadminPassword },
+    create: {
+      fullName: 'Hệ Thống Quản Trị Cấp Cao',
+      email: 'superadmin@library.com',
+      passwordHash: superadminPassword,
+      role: 'SUPERADMIN',
+      status: 'ACTIVE',
+      phone: '+84 900 000 001',
+      address: 'Phòng Điều Hành, Tòa Nhà Athenaeum, 124 Đường Thư Viện, Q.1, TP.HCM',
+    },
+  });
+
   const admin = await prisma.user.upsert({
     where: { email: 'admin@library.com' },
-    update: { passwordHash: adminPassword },
+    update: { fullName: 'TS. Nguyễn Hoàng Anh', passwordHash: adminPassword },
     create: {
-      fullName: 'TS. Nguyễn Hoàng Anh (Giám Đốc Thư Viện)',
+      fullName: 'TS. Nguyễn Hoàng Anh',
       email: 'admin@library.com',
       passwordHash: adminPassword,
       role: 'ADMIN',
@@ -30,9 +46,9 @@ export async function seedDatabase() {
 
   const librarian = await prisma.user.upsert({
     where: { email: 'librarian@library.com' },
-    update: { passwordHash: librarianPassword },
+    update: { fullName: 'Sarah Vance', passwordHash: librarianPassword },
     create: {
-      fullName: 'Sarah Vance (Thủ Thư Trưởng Phòng Mượn Trả)',
+      fullName: 'Sarah Vance',
       email: 'librarian@library.com',
       passwordHash: librarianPassword,
       role: 'LIBRARIAN',
@@ -44,9 +60,9 @@ export async function seedDatabase() {
 
   const archivist = await prisma.user.upsert({
     where: { email: 'archivist@library.com' },
-    update: { passwordHash: librarianPassword },
+    update: { fullName: 'Trần Minh Trí', passwordHash: librarianPassword },
     create: {
-      fullName: 'Dr. Trần Minh Trí (Thủ Thư Chuyên Trách Bản Thảo Cổ)',
+      fullName: 'Trần Minh Trí',
       email: 'archivist@library.com',
       passwordHash: librarianPassword,
       role: 'LIBRARIAN',
@@ -58,9 +74,9 @@ export async function seedDatabase() {
 
   const member1 = await prisma.user.upsert({
     where: { email: 'member1@library.com' },
-    update: { passwordHash: memberPassword },
+    update: { fullName: 'Nguyễn Văn An', passwordHash: memberPassword },
     create: {
-      fullName: 'Nguyễn Văn An (Nghiên Cứu Sinh KHMT)',
+      fullName: 'Nguyễn Văn An',
       email: 'member1@library.com',
       passwordHash: memberPassword,
       role: 'MEMBER',
@@ -73,9 +89,9 @@ export async function seedDatabase() {
 
   const member2 = await prisma.user.upsert({
     where: { email: 'member2@library.com' },
-    update: { passwordHash: memberPassword },
+    update: { fullName: 'Emily Watson', passwordHash: memberPassword },
     create: {
-      fullName: 'Emily Watson (Học Giả Thỉnh Giảng Văn Học)',
+      fullName: 'Emily Watson',
       email: 'member2@library.com',
       passwordHash: memberPassword,
       role: 'MEMBER',
@@ -88,9 +104,9 @@ export async function seedDatabase() {
 
   const member3 = await prisma.user.upsert({
     where: { email: 'member3@library.com' },
-    update: { passwordHash: memberPassword },
+    update: { fullName: 'Marcus Aurelius Vance', passwordHash: memberPassword },
     create: {
-      fullName: 'Marcus Aurelius Vance (Giảng Viên Triết Học)',
+      fullName: 'Marcus Aurelius Vance',
       email: 'member3@library.com',
       passwordHash: memberPassword,
       role: 'MEMBER',
@@ -103,9 +119,9 @@ export async function seedDatabase() {
 
   const member4 = await prisma.user.upsert({
     where: { email: 'member4@library.com' },
-    update: { passwordHash: memberPassword },
+    update: { fullName: 'Sofia Rodriguez', passwordHash: memberPassword },
     create: {
-      fullName: 'Sofia Rodriguez (Nghiên Cứu Sinh Vật Lý Thiên Văn)',
+      fullName: 'Sofia Rodriguez',
       email: 'member4@library.com',
       passwordHash: memberPassword,
       role: 'MEMBER',
@@ -118,9 +134,9 @@ export async function seedDatabase() {
 
   const member5 = await prisma.user.upsert({
     where: { email: 'member5@library.com' },
-    update: { passwordHash: memberPassword },
+    update: { fullName: 'Lê Hoàng Nam', passwordHash: memberPassword },
     create: {
-      fullName: 'Lê Hoàng Nam (Kỹ Sư Phần Mềm Cấp Cao)',
+      fullName: 'Lê Hoàng Nam',
       email: 'member5@library.com',
       passwordHash: memberPassword,
       role: 'MEMBER',
@@ -133,9 +149,9 @@ export async function seedDatabase() {
 
   const member6 = await prisma.user.upsert({
     where: { email: 'member6@library.com' },
-    update: { passwordHash: memberPassword },
+    update: { fullName: 'Trần Mai Phương', passwordHash: memberPassword },
     create: {
-      fullName: 'Trần Mai Phương (Dịch Giả & Biên Tập Sách)',
+      fullName: 'Trần Mai Phương',
       email: 'member6@library.com',
       passwordHash: memberPassword,
       role: 'MEMBER',
@@ -148,9 +164,9 @@ export async function seedDatabase() {
 
   const member7 = await prisma.user.upsert({
     where: { email: 'member7@library.com' },
-    update: { passwordHash: memberPassword },
+    update: { fullName: 'Đặng Quốc Hưng', passwordHash: memberPassword },
     create: {
-      fullName: 'Đặng Quốc Hưng (Sinh Viên Sử Học & Khảo Cổ)',
+      fullName: 'Đặng Quốc Hưng',
       email: 'member7@library.com',
       passwordHash: memberPassword,
       role: 'MEMBER',
@@ -163,9 +179,9 @@ export async function seedDatabase() {
 
   const memberSuspended = await prisma.user.upsert({
     where: { email: 'suspended@library.com' },
-    update: { passwordHash: memberPassword },
+    update: { fullName: 'David Miller', passwordHash: memberPassword },
     create: {
-      fullName: 'David Miller (Tài Khoản Tạm Khóa - Nợ Phạt)',
+      fullName: 'David Miller',
       email: 'suspended@library.com',
       passwordHash: memberPassword,
       role: 'MEMBER',
@@ -1565,6 +1581,18 @@ export async function seedDatabase() {
         comment: r.comment,
       },
     });
+  }
+
+  // Sync PostgreSQL auto-increment sequences to MAX(id)
+  const tables = ['users', 'authors', 'publishers', 'categories', 'books', 'book_copies', 'loans', 'reservations', 'fines', 'notifications'];
+  for (const table of tables) {
+    try {
+      await prisma.$executeRawUnsafe(
+        `SELECT setval(pg_get_serial_sequence('${table}', 'id'), COALESCE((SELECT MAX(id) FROM "${table}"), 1));`
+      );
+    } catch {
+      // Ignore if table doesn't use sequence
+    }
   }
 
   console.log(`✅ Athenaeum Library successfully seeded with:

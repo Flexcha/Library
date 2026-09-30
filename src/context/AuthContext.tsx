@@ -80,12 +80,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const switchAccount = async (role: UserRole | 'GUEST') => {
+    // Clear old tokens immediately
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+
     if (role === 'GUEST') {
-      await logout();
+      try { await api.logout(localStorage.getItem('refreshToken') || undefined); } catch { /* ignore */ }
+      // Full page reload to clear all stale React state
+      window.location.reload();
       return;
     }
 
     const credentials: Record<UserRole, { email: string; pass: string }> = {
+      SUPERADMIN: { email: 'superadmin@library.com', pass: 'SuperAdmin123!' },
       ADMIN: { email: 'admin@library.com', pass: 'Admin123!' },
       LIBRARIAN: { email: 'librarian@library.com', pass: 'Librarian123!' },
       MEMBER: { email: 'member1@library.com', pass: 'Member123!' },
@@ -93,9 +100,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const cred = credentials[role];
     if (cred) {
-      await login(cred.email, cred.pass);
+      // Log in and store tokens, then do full reload so the new role is cleanly bootstrapped
+      const data = await api.login({ email: cred.email, password: cred.pass });
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      // Full page reload ensures fresh React tree with correct user context
+      window.location.reload();
     }
   };
+
 
   return (
     <AuthContext.Provider value={{ user, token, isLoading, login, register, logout, switchAccount }}>

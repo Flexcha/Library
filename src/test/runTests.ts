@@ -171,7 +171,7 @@ async function run() {
   // 1. Checkout an available copy
   const memberUser = await prisma.user.findUnique({ where: { email: 'member1@library.com' } });
   const cleanCodeCopy = await prisma.bookCopy.findFirst({
-    where: { copyCode: 'LIB-000101', status: 'AVAILABLE' },
+    where: { copyCode: 'ATH-2024-00101', status: 'AVAILABLE' },
   });
 
   const checkoutRes = await request(app)
@@ -218,30 +218,34 @@ async function run() {
   // ==========================================
   console.log('\n[Phase 4] Reservations & Fines Tests:');
 
-  // 1. Place reservation
-  const memberLogin = await request(app)
+  // 1. Place reservation for a member on a title they are not currently borrowing
+  const member4User = await prisma.user.findUnique({ where: { email: 'member4@library.com' } });
+  const member4Login = await request(app)
     .post('/api/v1/auth/login')
-    .send({ email: 'member1@library.com', password: 'Member123!' });
-  const member1Token = memberLogin.body.data.accessToken;
+    .send({ email: 'member4@library.com', password: 'Member123!' });
+  const member4Token = member4Login.body.data.accessToken;
+
+  // Pick a book member4 does not have an active loan on
+  const targetBook = await prisma.book.findFirst({ where: { id: 10 } });
 
   const resvRes = await request(app)
     .post('/api/v1/reservations')
-    .set('Authorization', `Bearer ${member1Token}`)
-    .send({ bookId: 1 });
+    .set('Authorization', `Bearer ${member4Token}`)
+    .send({ bookId: targetBook!.id });
   assert(resvRes.status === 201 && resvRes.body.data.queuePosition >= 1, 'Place reservation returns 201 with queuePosition');
   const reservationId = resvRes.body.data.id;
 
   // 2. Cannot duplicate reservation for same title
   const dupResvRes = await request(app)
     .post('/api/v1/reservations')
-    .set('Authorization', `Bearer ${member1Token}`)
-    .send({ bookId: 1 });
+    .set('Authorization', `Bearer ${member4Token}`)
+    .send({ bookId: targetBook!.id });
   assert(dupResvRes.status === 409, 'Duplicate reservation on same title returns 409');
 
   // 3. Cancel reservation
   const cancelRes = await request(app)
     .patch(`/api/v1/reservations/${reservationId}/cancel`)
-    .set('Authorization', `Bearer ${member1Token}`);
+    .set('Authorization', `Bearer ${member4Token}`);
   assert(cancelRes.status === 200 && cancelRes.body.data.status === 'CANCELLED', 'Cancel reservation sets status to CANCELLED');
 
   // 4. Create fine & waive
@@ -278,7 +282,7 @@ async function run() {
 
   const notifRes = await request(app)
     .get('/api/v1/notifications')
-    .set('Authorization', `Bearer ${member1Token}`);
+    .set('Authorization', `Bearer ${member4Token}`);
   assert(notifRes.status === 200 && Array.isArray(notifRes.body.data), 'GET /notifications returns array of notifications');
 
   console.log(`\n========================================`);

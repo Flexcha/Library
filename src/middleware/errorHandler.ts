@@ -18,17 +18,17 @@ export const errorHandler = (err: any, _req: Request, res: Response, _next: Next
         : String(err.meta?.target || '');
 
       let code = 'DUPLICATE_RESOURCE';
-      let message = 'A duplicate record already exists.';
+      let message = 'Dữ liệu trùng lặp đã tồn tại trong hệ thống.';
 
       if (target.includes('email') || err.message.includes('email')) {
         code = 'DUPLICATE_EMAIL';
-        message = 'Email is already registered.';
+        message = 'Địa chỉ email này đã được đăng ký tài khoản.';
       } else if (target.includes('isbn') || err.message.includes('isbn')) {
         code = 'DUPLICATE_ISBN';
-        message = 'A book with this ISBN already exists.';
+        message = 'Mã sách ISBN này đã tồn tại trong hệ thống.';
       } else if (target.includes('copy_code') || err.message.includes('copyCode') || err.message.includes('copy_code')) {
         code = 'DUPLICATE_COPY_CODE';
-        message = 'A copy with this copy code already exists.';
+        message = 'Mã bản sao sách (Copy Code) này đã tồn tại.';
       }
 
       ApiResponse.error(res, code, message, [], 409);
@@ -36,7 +36,7 @@ export const errorHandler = (err: any, _req: Request, res: Response, _next: Next
     }
 
     if (err.code === 'P2025') {
-      ApiResponse.error(res, 'RESOURCE_NOT_FOUND', 'Requested resource was not found.', [], 404);
+      ApiResponse.error(res, 'RESOURCE_NOT_FOUND', 'Dữ liệu yêu cầu không tồn tại trong hệ thống.', [], 404);
       return;
     }
   }

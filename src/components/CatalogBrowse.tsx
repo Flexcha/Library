@@ -12,16 +12,10 @@ import {
   BookOpen,
   Plus,
   BookmarkPlus,
-  Trash2,
   CopyPlus,
-  RotateCw,
-  Library,
   ChevronLeft,
   ChevronRight,
   X,
-  Layers,
-  Sparkles,
-  CheckCircle2,
   Edit3,
   User,
 } from 'lucide-react';
@@ -124,7 +118,6 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
   const [shelfLocationInput, setShelfLocationInput] = useState('');
 
   const isStaff = user?.role === 'ADMIN' || user?.role === 'LIBRARIAN';
-  const isAdmin = user?.role === 'ADMIN';
 
   const fetchFilters = async () => {
     try {
@@ -160,7 +153,7 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
       setTotalElements(res.totalElements || 0);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Failed to load catalog titles.');
+      setError(err.message || 'Không thể tải danh mục sách.');
     } finally {
       setLoading(false);
     }
@@ -179,7 +172,7 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
       const b = await api.getBook(bookId);
       setSelectedBook(b);
     } catch (err: any) {
-      toast.error(err.message || 'Unable to load book details.');
+      toast.error(err.message || 'Không thể tải thông tin chi tiết sách.');
     }
   };
 
@@ -191,40 +184,35 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
     try {
       const res = await api.createReservation(bookId);
       toast.success(
-        `Reservation confirmed! You are at queue position #${res.queuePosition}.`,
-        'Hold Placed'
+        `Đã vị trí giữ sách thành công! Vị trí hàng đợi: #${res.queuePosition}.`,
+        'Đặt Giữ Sách Thành Công'
       );
       if (selectedBook) {
         handleOpenBookDetail(bookId);
       }
       fetchBooks();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to place reservation hold.');
+      toast.error(err.message || 'Không thể đặt giữ sách.');
     }
   };
 
   const validateBookForm = () => {
     const errs: Record<string, string> = {};
     if (!bookForm.title.trim()) {
-      errs.title = 'Title is required';
+      errs.title = 'Vui lòng nhập tựa sách';
     }
     const cleanIsbn = bookForm.isbn.replace(/[-\s]/g, '');
     if (!cleanIsbn) {
-      errs.isbn = 'ISBN is required';
-    } else if (cleanIsbn.length !== 10 && cleanIsbn.length !== 13) {
-      errs.isbn = 'ISBN must be 10 or 13 digits';
+      errs.isbn = 'Vui lòng nhập ISBN';
     }
     if (!bookForm.categoryId) {
-      errs.categoryId = 'Please select a category';
+      errs.categoryId = 'Vui lòng chọn thể loại';
     }
     if (!bookForm.publisherId) {
-      errs.publisherId = 'Please select a publisher';
+      errs.publisherId = 'Vui lòng chọn nhà xuất bản';
     }
     if (!bookForm.authorInput.trim()) {
       errs.authorInput = 'Vui lòng nhập tên tác giả';
-    }
-    if (bookForm.publicationYear < 1000 || bookForm.publicationYear > 2100) {
-      errs.publicationYear = 'Enter a valid 4-digit year';
     }
     setBookErrors(errs);
     return Object.keys(errs).length === 0;
@@ -251,7 +239,7 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
       };
 
       await api.createBook(payload);
-      toast.success(`Đã thêm sách "${bookForm.title}" vào danh mục thư viện!`, 'Biên Mục Thành Công');
+      toast.success(`Đã thêm sách "${bookForm.title}" vào danh mục!`, 'Thành Công');
       setShowAddBookModal(false);
       setBookForm({
         title: '',
@@ -270,7 +258,7 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
       fetchBooks();
       fetchFilters();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create book title.');
+      toast.error(err.message || 'Thêm sách thất bại.');
     } finally {
       setIsSubmittingBook(false);
     }
@@ -279,9 +267,7 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
   const validateCopyForm = () => {
     const errs: Record<string, string> = {};
     if (!copyCodeInput.trim()) {
-      errs.copyCode = 'Accession/barcode code is required';
-    } else if (copyCodeInput.trim().length < 3) {
-      errs.copyCode = 'Code must be at least 3 characters';
+      errs.copyCode = 'Vui lòng nhập mã bản sao';
     }
     setCopyErrors(errs);
     return Object.keys(errs).length === 0;
@@ -298,10 +284,7 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
         copyCode: copyCodeInput.trim().toUpperCase(),
         shelfLocation: shelfLocationInput.trim() || undefined,
       });
-      toast.success(
-        `Copy ${copyCodeInput.trim().toUpperCase()} registered successfully!`,
-        'Inventory Updated'
-      );
+      toast.success(`Đã thêm bản sao vật lý ${copyCodeInput.trim().toUpperCase()}!`, 'Thành Công');
       setShowAddCopyModal(false);
       setCopyCodeInput('');
       setShelfLocationInput('');
@@ -311,36 +294,36 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
       }
       fetchBooks();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to register physical copy.');
+      toast.error(err.message || 'Thêm bản sao thất bại.');
     } finally {
       setIsSubmittingCopy(false);
     }
   };
 
   const handleDeleteBook = async (bookId: number) => {
-    if (!confirm('Are you sure you want to delete this title? This cannot be undone.')) {
+    if (!confirm('Bạn có chắc chắn muốn xóa đầu sách này khỏi danh mục? Action này không thể hoàn tác.')) {
       return;
     }
     try {
       await api.deleteBook(bookId);
-      toast.success('Title and records removed from catalog.', 'Deleted');
+      toast.success('Đã xóa đầu sách khỏi danh mục.', 'Đã xóa');
       setSelectedBook(null);
       fetchBooks();
     } catch (err: any) {
-      toast.error(err.message || 'Cannot delete title.');
+      toast.error(err.message || 'Không thể xóa đầu sách.');
     }
   };
 
   const handleUpdateCopyStatus = async (copyId: number, status: string) => {
     try {
       await api.updateCopyStatus(copyId, status);
-      toast.success(`Physical copy status set to ${status}.`);
+      toast.success(`Đã cập nhật trạng thái bản sao thành ${status}.`);
       if (selectedBook) {
         handleOpenBookDetail(selectedBook.id);
       }
       fetchBooks();
     } catch (err: any) {
-      toast.error(err.message || 'Status update failed.');
+      toast.error(err.message || 'Cập nhật trạng thái thất bại.');
     }
   };
 
@@ -371,12 +354,11 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
     if (!editBookForm.title.trim()) {
       errs.title = 'Tựa sách không được để trống';
     }
-    const cleanIsbn = editBookForm.isbn.replace(/[-\s]/g, '');
-    if (!cleanIsbn) {
+    if (!editBookForm.isbn.trim()) {
       errs.isbn = 'Mã ISBN không được để trống';
     }
     if (!editBookForm.authorInput.trim()) {
-      errs.authorInput = 'Vui lòng nhập tên tác giả (sẽ lưu trực tiếp vào CSDL)';
+      errs.authorInput = 'Vui lòng nhập tên tác giả';
     }
     setEditBookErrors(errs);
     return Object.keys(errs).length === 0;
@@ -404,10 +386,7 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
       };
 
       await api.updateBook(editingBook.id, payload);
-      toast.success(
-        `Đã cập nhật ấn bản "${editBookForm.title}" và lưu thông tin tác giả vào cơ sở dữ liệu!`,
-        'Cập Nhật CSDL Thành Công'
-      );
+      toast.success(`Đã cập nhật thông tin sách "${editBookForm.title}"!`, 'Thành Công');
       setShowEditBookModal(false);
       setEditingBook(null);
       if (selectedBook && selectedBook.id === editingBook.id) {
@@ -436,19 +415,19 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Library Catalog Header & Search Station */}
-      <div className="aged-paper border border-[#ded5c2] rounded-lg p-6 shadow-2xs space-y-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-[#b8ac95] pb-5">
+      {/* Header & Filter Card */}
+      <div className="ui-card p-6 space-y-5 border border-white/10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
-            <div className="flex items-center gap-2 text-[#92400e] text-xs font-semibold uppercase tracking-wider mb-1 font-serif">
-              <Library className="w-4 h-4" />
-              <span>Mục Lục Thẻ Thư Viện &amp; Các Kho Sách</span>
+            <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-1">
+              <BookOpen className="w-4 h-4" />
+              <span>Tra Cứu Danh Mục Thư Viện</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 font-serif-display tracking-tight">
-              Bộ Sưu Tập &amp; Danh Mục Tài Liệu
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              Kho Tài Liệu & Sách Học Thuật
             </h1>
-            <p className="text-xs sm:text-sm text-stone-600 mt-1 leading-relaxed font-serif-data">
-              Khám phá {totalElements} ấn bản đã biên mục thuộc các kho chuyên khảo, tài liệu nghiên cứu và sách cho mượn.
+            <p className="text-sm text-slate-400 mt-1">
+              Hiển thị {totalElements} ấn bản đã biên mục sẵn sàng cho mượn và nghiên cứu.
             </p>
           </div>
           {isStaff && (
@@ -458,69 +437,32 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
                 setBookErrors({});
                 setShowAddBookModal(true);
               }}
-              className="flex items-center space-x-2 px-4 py-2 bg-[#92400e] hover:bg-[#78350f] text-white font-medium rounded text-xs shadow-xs transition self-start cursor-pointer font-serif-data"
+              className="btn-primary self-start rounded-xl"
             >
               <Plus className="w-4 h-4" />
-              <span>Biên Mục Sách Mới</span>
+              <span>Thêm sách mới</span>
             </button>
           )}
         </div>
 
-        {/* Quick Category Filter Tabs (Interactive Segmented Control) */}
-        <div className="overflow-x-auto pb-1">
-          <div className="inline-flex items-center gap-1 p-1 bg-[#ebe4d6] border border-[#d6ccb8] rounded-lg text-xs font-serif-data">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedCategory('');
-                setPage(0);
-              }}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                selectedCategory === ''
-                  ? 'bg-white text-stone-900 font-bold shadow-2xs'
-                  : 'text-stone-700 hover:text-stone-900'
-              }`}
-            >
-              Tất Cả Kho Sách
-            </button>
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => {
-                  setSelectedCategory(String(c.id));
-                  setPage(0);
-                }}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                  selectedCategory === String(c.id)
-                    ? 'bg-white text-stone-900 font-bold shadow-2xs'
-                    : 'text-stone-700 hover:text-stone-900'
-                }`}
-              >
-                {c.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Search & Filter Controls */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1 font-serif-data">
+        {/* Filter Controls Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Keyword Search */}
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Tìm theo tựa sách, tác giả hoặc ISBN..."
+              placeholder="Tìm theo tựa sách, tác giả, ISBN..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setPage(0);
               }}
-              className="w-full pl-9 pr-3 py-2 bg-[#fcfbf7] border border-[#d5ccba] rounded text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#92400e] transition font-serif"
+              className="ui-input pl-9 text-xs bg-slate-900/90 border-slate-700/80 text-white rounded-lg"
             />
           </div>
 
-          {/* Category Filter */}
+          {/* Category Dropdown */}
           <div>
             <select
               value={selectedCategory}
@@ -528,29 +470,29 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
                 setSelectedCategory(e.target.value);
                 setPage(0);
               }}
-              className="w-full px-3 py-2 bg-[#fcfbf7] border border-[#d5ccba] rounded text-xs text-stone-800 focus:outline-none focus:border-[#92400e] transition cursor-pointer font-serif"
+              className="ui-input text-xs cursor-pointer bg-slate-900/90 border-slate-700/80 text-white rounded-lg"
             >
-              <option value="">Tất Cả Phân Loại Chuyên Ngành</option>
+              <option value="" className="bg-slate-900">Tất cả Thể loại</option>
               {categories.map((c) => (
-                <option key={c.id} value={c.id}>
+                <option key={c.id} value={c.id} className="bg-slate-900">
                   {c.name}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Author Input Filter (Replaced Select Dropdown) */}
+          {/* Author Input Filter */}
           <div className="relative">
-            <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
+            <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Nhập tên tác giả để lọc..."
+              placeholder="Lọc theo tác giả..."
               value={authorSearch}
               onChange={(e) => {
                 setAuthorSearch(e.target.value);
                 setPage(0);
               }}
-              className="w-full pl-9 pr-7 py-2 bg-[#fcfbf7] border border-[#d5ccba] rounded text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-[#92400e] transition font-serif"
+              className="ui-input pl-9 pr-7 text-xs bg-slate-900/90 border-slate-700/80 text-white rounded-lg"
             />
             {authorSearch && (
               <button
@@ -559,39 +501,34 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
                   setAuthorSearch('');
                   setPage(0);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer p-0.5"
-                title="Xóa lọc tác giả"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
 
-          {/* Availability Toggle */}
-          <div className="flex items-center justify-between sm:justify-end gap-3 px-3 py-2 bg-[#fcfbf7] border border-[#d5ccba] rounded">
-            <label
-              htmlFor="availOnly"
-              className="text-xs text-stone-800 select-none cursor-pointer flex items-center gap-2 font-serif font-medium"
-            >
+          {/* Availability Checkbox & Reset */}
+          <div className="flex items-center justify-between px-3 py-2 bg-slate-900/90 border border-slate-700/80 rounded-lg">
+            <label className="text-xs text-slate-200 font-medium flex items-center gap-2 cursor-pointer">
               <input
-                id="availOnly"
                 type="checkbox"
                 checked={availableOnly}
                 onChange={(e) => {
                   setAvailableOnly(e.target.checked);
                   setPage(0);
                 }}
-                className="w-4 h-4 rounded text-[#92400e] focus:ring-[#92400e] border-[#d5ccba] cursor-pointer"
+                className="rounded text-indigo-500 border-slate-700 cursor-pointer focus:ring-0"
               />
-              <span>Đang Có Sẵn Trên Giá</span>
+              <span>Chỉ hiện sách có sẵn</span>
             </label>
             {hasActiveFilters && (
               <button
                 type="button"
                 onClick={resetFilters}
-                className="text-[11px] text-[#92400e] hover:underline font-bold cursor-pointer font-serif"
+                className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer"
               >
-                Đặt Lại Lọc
+                Đặt lại
               </button>
             )}
           </div>
@@ -607,113 +544,92 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
         </div>
       ) : error ? (
         <ErrorState
-          title="Thông Báo Dịch Vụ Mục Lục"
+          title="Không thể tải danh mục"
           message={error}
           onRetry={fetchBooks}
         />
       ) : books.length === 0 ? (
         <EmptyState
           icon={BookOpen}
-          title="Không Tìm Thấy Tác Phẩm Nào"
+          title="Không tìm thấy sách phù hợp"
           description={
             hasActiveFilters
-              ? 'Không có cuốn sách nào khớp với bộ lọc hoặc từ khóa tìm kiếm đã chọn. Vui lòng thử nới lỏng tiêu chí tìm kiếm.'
-              : 'Hiện chưa có tài liệu nào trong danh mục thư viện.'
+              ? 'Không có kết quả nào khớp với bộ lọc đã chọn. Thử thay đổi từ khóa hoặc đặt lại bộ lọc.'
+              : 'Thư viện hiện chưa có ấn bản nào trong danh mục.'
           }
-          actionLabel={hasActiveFilters ? 'Đặt Lại Bộ Lọc' : undefined}
+          actionLabel={hasActiveFilters ? 'Đặt lại bộ lọc' : undefined}
           onAction={hasActiveFilters ? resetFilters : undefined}
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {books.map((b) => {
-            const hasCopies = b.availableCopies > 0;
+            const avail = b.availableCopies ?? 0;
+            const total = b.totalCopies ?? 0;
+            const hasCopies = avail > 0;
             return (
               <div
                 key={b.id}
-                className="aged-paper-card border border-[#ded5c2] hover:border-[#b45309] rounded-lg overflow-hidden shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col group relative"
+                className="ui-card ui-card-hover overflow-hidden flex flex-col justify-between group border border-white/10"
               >
-                {/* Book Spine Callout Bar */}
-                <div className="bg-[#f2ece0] px-3 py-1.5 border-b border-[#ded5c2] flex items-center justify-between text-[10px] text-stone-700 font-mono">
-                  <span className="font-semibold">MÃ #{b.isbn.slice(-4)}</span>
-                  <span>{b.category?.name || 'Tổng quát'}</span>
-                </div>
-
-                {/* Book Cover with subtle book spine shadow */}
-                <div className="h-52 w-full bg-[#faf6ee] relative overflow-hidden flex items-center justify-center border-b border-[#ded5c2] p-3">
+                {/* Book Cover */}
+                <div className="h-48 w-full bg-slate-950/60 relative overflow-hidden flex items-center justify-center border-b border-white/10 p-3">
                   {b.coverImageUrl ? (
                     <img
                       src={b.coverImageUrl}
                       alt={b.title}
-                      className="h-full max-w-[85%] object-cover rounded shadow-sm book-spine-shadow group-hover:scale-102 transition duration-300"
+                      className="h-full max-w-[85%] object-cover rounded shadow-md group-hover:scale-105 transition duration-300"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center text-stone-400 p-4 text-center">
-                      <BookOpen className="w-10 h-10 mb-2 text-stone-400" />
-                      <span className="text-[11px] font-serif-display text-stone-600 italic">
+                    <div className="flex flex-col items-center justify-center text-slate-500 p-4 text-center">
+                      <BookOpen className="w-10 h-10 mb-2 stroke-1 text-slate-500" />
+                      <span className="text-xs text-slate-300 font-medium line-clamp-2">
                         {b.title}
                       </span>
                     </div>
                   )}
                 </div>
 
-                {/* Book Details (Anti-AI Zero-Pill Unboxed Metadata) */}
-                <div className="p-4 flex-1 flex flex-col justify-between space-y-3 font-serif-data">
+                {/* Details */}
+                <div className="p-4 flex-1 flex flex-col justify-between space-y-3 bg-slate-900/60">
                   <div className="space-y-1.5">
-                    {/* Quiet Unboxed Metadata Line */}
-                    <div className="flex items-center gap-1.5 text-[11px] text-stone-600">
-                      {b.publicationYear && <span>{b.publicationYear}</span>}
-                      {b.publicationYear && b.pageCount && <span aria-hidden="true">·</span>}
-                      {b.pageCount && <span>{b.pageCount} trang</span>}
-                      {b.language && <span aria-hidden="true">·</span>}
-                      {b.language && <span>{b.language}</span>}
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                      <span className="font-mono">ISBN: {b.isbn}</span>
+                      <span className="text-indigo-300">{b.category?.name || 'Tổng quát'}</span>
                     </div>
 
-                    <h3 className="font-bold text-stone-900 text-base font-serif-display leading-snug line-clamp-2 group-hover:text-[#92400e] transition">
+                    <h3 className="font-semibold text-white text-sm leading-snug line-clamp-2 group-hover:text-indigo-400 transition-colors">
                       {b.title}
                     </h3>
 
-                    <p className="text-xs text-stone-700 font-serif line-clamp-1">
-                      {b.authors.map((a) => a.name).join(', ') || 'Nhiều tác giả'}
+                    <p className="text-xs text-slate-400 line-clamp-1">
+                      {b.authors?.map((a) => a.name).join(', ') || 'Chưa rõ tác giả'}
                     </p>
 
-                    <div className="pt-2 flex items-center justify-between text-[11px]">
-                      <span className="font-mono text-stone-600 text-[10px]">ISBN {b.isbn}</span>
-                      <span
-                        className={`font-semibold flex items-center gap-1 font-serif ${
-                          hasCopies ? 'text-emerald-800' : 'text-amber-900'
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            hasCopies ? 'bg-emerald-600' : 'bg-amber-600'
-                          }`}
-                        />
-                        {hasCopies
-                          ? `Còn ${b.availableCopies}/${b.totalCopies} cuốn`
-                          : 'Hàng đợi đang hoạt động'}
+                    <div className="pt-2 flex items-center justify-between">
+                      <span className={`badge ${hasCopies ? 'badge-green' : 'badge-red'}`}>
+                        {hasCopies ? `Có sẵn ${avail}/${total}` : 'Đã mượn hết'}
                       </span>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="pt-3 border-t border-[#ded5c2] flex items-center justify-between gap-2">
+                  {/* Actions */}
+                  <div className="pt-3 border-t border-slate-800 flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => handleOpenBookDetail(b.id)}
-                      className="flex-1 py-1.5 px-3 bg-[#fcfbf7] hover:bg-[#f2ece0] text-stone-800 hover:text-stone-900 text-xs font-semibold rounded border border-[#d5ccba] transition text-center cursor-pointer font-serif"
+                      className="btn-secondary flex-1 py-1.5 text-xs rounded-lg"
                     >
-                      Phiếu Yêu Cầu &amp; Chi Tiết
+                      Chi tiết & Mượn
                     </button>
 
-                    {b.availableCopies === 0 && (
+                    {avail === 0 && (
                       <button
                         type="button"
                         onClick={() => handlePlaceReservation(b.id)}
-                        className="py-1.5 px-3 bg-[#92400e] hover:bg-[#78350f] text-white text-xs font-medium rounded transition flex items-center space-x-1 cursor-pointer font-serif-data"
-                        title="Đăng ký giữ sách trong hàng đợi"
+                        className="btn-primary py-1.5 px-3 text-xs rounded-lg"
+                        title="Đặt trước"
                       >
                         <BookmarkPlus className="w-3.5 h-3.5" />
-                        <span>Đặt Trước</span>
                       </button>
                     )}
 
@@ -722,10 +638,10 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
                         <button
                           type="button"
                           onClick={() => handleOpenEditBook(b)}
-                          className="py-1.5 px-2 bg-[#fcfbf7] hover:bg-[#f2ece0] text-stone-700 hover:text-[#92400e] border border-[#d5ccba] rounded text-xs transition cursor-pointer"
-                          title="Sửa ấn bản & tác giả"
+                          className="btn-secondary py-1.5 px-2 text-xs rounded-lg"
+                          title="Sửa sách"
                         >
-                          <Edit3 className="w-3.5 h-3.5" />
+                          <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
                         </button>
                         <button
                           type="button"
@@ -734,10 +650,10 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
                             setCopyErrors({});
                             setShowAddCopyModal(true);
                           }}
-                          className="py-1.5 px-2.5 bg-[#fcfbf7] hover:bg-[#f2ece0] text-stone-700 hover:text-[#92400e] border border-[#d5ccba] rounded text-xs transition cursor-pointer"
-                          title="Đăng ký mã bản sao vật lý"
+                          className="btn-secondary py-1.5 px-2 text-xs rounded-lg"
+                          title="Thêm bản sao"
                         >
-                          <CopyPlus className="w-3.5 h-3.5" />
+                          <CopyPlus className="w-3.5 h-3.5 text-indigo-400" />
                         </button>
                       </div>
                     )}
@@ -751,18 +667,16 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between aged-paper border border-[#ded5c2] rounded-lg p-3.5 text-xs text-stone-700 shadow-2xs font-serif-data">
+        <div className="flex items-center justify-between ui-card p-4 text-xs text-slate-400 border border-white/10">
           <div>
-            Đang hiển thị Trang <strong className="text-stone-900 font-bold font-serif">{page + 1}</strong> trên{' '}
-            <strong className="text-stone-900 font-bold font-serif">{totalPages}</strong> ({totalElements} tài liệu lưu trữ)
+            Trang <strong className="text-white">{page + 1}</strong> / <strong className="text-white">{totalPages}</strong> ({totalElements} ấn bản)
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="p-1.5 bg-[#fcfbf7] hover:bg-[#f2ece0] border border-[#d5ccba] disabled:opacity-40 text-stone-700 rounded transition cursor-pointer"
-              aria-label="Previous page"
+              className="btn-secondary py-1 px-3 text-xs disabled:opacity-40 rounded-lg"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -770,8 +684,7 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="p-1.5 bg-[#fcfbf7] hover:bg-[#f2ece0] border border-[#d5ccba] disabled:opacity-40 text-stone-700 rounded transition cursor-pointer"
-              aria-label="Next page"
+              className="btn-secondary py-1 px-3 text-xs disabled:opacity-40 rounded-lg"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -779,7 +692,7 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
         </div>
       )}
 
-      {/* Slide-In Archival Card Detail Modal */}
+      {/* Modal Detail */}
       <BookDetailModal
         book={selectedBook}
         onClose={() => setSelectedBook(null)}
@@ -795,477 +708,277 @@ export const CatalogBrowse: React.FC<CatalogBrowseProps> = ({
         openAuthModal={openAuthModal}
       />
 
-      {/* Add Book Modal with Inline Validation Feedback */}
+      {/* Modal Add Book */}
       {showAddBookModal && (
-        <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <form
-            onSubmit={handleCreateBook}
-            noValidate
-            className="aged-paper border border-[#ded5c2] rounded-lg max-w-lg w-full p-6 shadow-2xl space-y-4 my-8 font-serif-data"
-          >
-            <div className="flex items-center justify-between border-b-2 border-[#b8ac95] pb-3">
-              <div>
-                <h3 className="font-bold text-stone-900 text-lg font-serif-display">Biên Mục Sách Mới</h3>
-                <p className="text-xs text-stone-600 font-serif">Đăng ký thư mục ấn bản vào sổ lưu chiểu thư viện</p>
-              </div>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-[#0d1322] border border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="text-lg font-bold text-white">Biên mục Sách Mới</h3>
               <button
                 type="button"
                 onClick={() => setShowAddBookModal(false)}
-                className="text-stone-400 hover:text-stone-700 cursor-pointer"
+                className="text-slate-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="col-span-2">
-                <label className="block text-stone-700 font-medium mb-1">Tựa Sách *</label>
+            <form onSubmit={handleCreateBook} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Tựa sách *</label>
                 <input
                   type="text"
                   value={bookForm.title}
-                  onChange={(e) => {
-                    setBookForm({ ...bookForm, title: e.target.value });
-                    if (bookErrors.title) setBookErrors({ ...bookErrors, title: '' });
-                  }}
-                  placeholder="Ví dụ: Lược Sử Thời Gian"
-                  className={`w-full px-3 py-2 bg-[#fbf9f5] border rounded text-stone-900 focus:outline-none ${
-                    bookErrors.title ? 'border-red-500' : 'border-[#dcd6c8] focus:border-[#92400e]'
-                  }`}
+                  onChange={(e) => setBookForm({ ...bookForm, title: e.target.value })}
+                  placeholder="Nhập tựa sách..."
+                  className="ui-input"
                 />
-                {bookErrors.title && (
-                  <p className="text-[11px] text-red-600 mt-1">{bookErrors.title}</p>
-                )}
+                {bookErrors.title && <p className="text-xs text-rose-400 mt-1">{bookErrors.title}</p>}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">ISBN *</label>
+                  <input
+                    type="text"
+                    value={bookForm.isbn}
+                    onChange={(e) => setBookForm({ ...bookForm, isbn: e.target.value })}
+                    placeholder="978-..."
+                    className="ui-input font-mono"
+                  />
+                  {bookErrors.isbn && <p className="text-xs text-rose-400 mt-1">{bookErrors.isbn}</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Năm xuất bản</label>
+                  <input
+                    type="number"
+                    value={bookForm.publicationYear}
+                    onChange={(e) => setBookForm({ ...bookForm, publicationYear: parseInt(e.target.value, 10) || 2024 })}
+                    className="ui-input"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-stone-700 font-medium mb-1">Mã ISBN (10 hoặc 13 chữ số) *</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Tác giả *</label>
                 <input
                   type="text"
-                  value={bookForm.isbn}
-                  onChange={(e) => {
-                    setBookForm({ ...bookForm, isbn: e.target.value });
-                    if (bookErrors.isbn) setBookErrors({ ...bookErrors, isbn: '' });
-                  }}
-                  placeholder="9780132350884"
-                  className={`w-full px-3 py-2 bg-[#fbf9f5] border rounded text-stone-900 font-mono focus:outline-none ${
-                    bookErrors.isbn ? 'border-red-500' : 'border-[#dcd6c8] focus:border-[#92400e]'
-                  }`}
-                />
-                {bookErrors.isbn && (
-                  <p className="text-[11px] text-red-600 mt-1">{bookErrors.isbn}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-stone-700 font-medium mb-1">Ngôn Ngữ</label>
-                <input
-                  type="text"
-                  value={bookForm.language}
-                  onChange={(e) => setBookForm({ ...bookForm, language: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none focus:border-[#92400e]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-stone-700 font-medium mb-1">Phân Loại Chuyên Ngành *</label>
-                <select
-                  value={bookForm.categoryId}
-                  onChange={(e) => {
-                    setBookForm({ ...bookForm, categoryId: e.target.value });
-                    if (bookErrors.categoryId) setBookErrors({ ...bookErrors, categoryId: '' });
-                  }}
-                  className={`w-full px-3 py-2 bg-[#fbf9f5] border rounded text-stone-900 focus:outline-none cursor-pointer ${
-                    bookErrors.categoryId ? 'border-red-500' : 'border-[#dcd6c8] focus:border-[#92400e]'
-                  }`}
-                >
-                  <option value="">Chọn ngành phân loại...</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                {bookErrors.categoryId && (
-                  <p className="text-[11px] text-red-600 mt-1">{bookErrors.categoryId}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-stone-700 font-medium mb-1">Nhà Xuất Bản *</label>
-                <select
-                  value={bookForm.publisherId}
-                  onChange={(e) => {
-                    setBookForm({ ...bookForm, publisherId: e.target.value });
-                    if (bookErrors.publisherId) setBookErrors({ ...bookErrors, publisherId: '' });
-                  }}
-                  className={`w-full px-3 py-2 bg-[#fbf9f5] border rounded text-stone-900 focus:outline-none cursor-pointer ${
-                    bookErrors.publisherId ? 'border-red-500' : 'border-[#dcd6c8] focus:border-[#92400e]'
-                  }`}
-                >
-                  <option value="">Chọn nhà xuất bản...</option>
-                  {publishers.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                {bookErrors.publisherId && (
-                  <p className="text-[11px] text-red-600 mt-1">{bookErrors.publisherId}</p>
-                )}
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-stone-700 font-medium mb-1 font-serif">Tác Giả *</label>
-                <input
-                  type="text"
-                  placeholder="Nhập tên tác giả (ví dụ: Nguyễn Du, Nam Cao, Donald E. Knuth)..."
                   value={bookForm.authorInput}
-                  onChange={(e) => {
-                    setBookForm({ ...bookForm, authorInput: e.target.value });
-                    if (bookErrors.authorInput) setBookErrors({ ...bookErrors, authorInput: '' });
-                  }}
-                  className={`w-full px-3 py-2 bg-[#fbf9f5] border rounded text-stone-900 focus:outline-none font-serif ${
-                    bookErrors.authorInput ? 'border-red-500' : 'border-[#dcd6c8] focus:border-[#92400e]'
-                  }`}
+                  onChange={(e) => setBookForm({ ...bookForm, authorInput: e.target.value })}
+                  placeholder="Nhập tên tác giả (phân cách bằng dấu phẩy)..."
+                  className="ui-input"
                 />
-                {bookErrors.authorInput ? (
-                  <p className="text-[11px] text-red-600 mt-1">{bookErrors.authorInput}</p>
-                ) : (
-                  <span className="text-[10px] text-stone-500 font-serif">
-                    Nhập tên tác giả để tự động lưu vào cơ sở dữ liệu. Ngăn cách nhiều tác giả bằng dấu phẩy (,).
-                  </span>
-                )}
+                {bookErrors.authorInput && <p className="text-xs text-rose-400 mt-1">{bookErrors.authorInput}</p>}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Thể loại *</label>
+                  <select
+                    value={bookForm.categoryId}
+                    onChange={(e) => setBookForm({ ...bookForm, categoryId: e.target.value })}
+                    className="ui-input cursor-pointer bg-slate-900 text-white"
+                  >
+                    <option value="">-- Chọn thể loại --</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  {bookErrors.categoryId && <p className="text-xs text-rose-400 mt-1">{bookErrors.categoryId}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Nhà xuất bản *</label>
+                  <select
+                    value={bookForm.publisherId}
+                    onChange={(e) => setBookForm({ ...bookForm, publisherId: e.target.value })}
+                    className="ui-input cursor-pointer bg-slate-900 text-white"
+                  >
+                    <option value="">-- Chọn NXB --</option>
+                    {publishers.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                  {bookErrors.publisherId && <p className="text-xs text-rose-400 mt-1">{bookErrors.publisherId}</p>}
+                </div>
               </div>
 
               <div>
-                <label className="block text-stone-700 font-medium mb-1">Năm Xuất Bản</label>
-                <input
-                  type="number"
-                  value={bookForm.publicationYear}
-                  onChange={(e) => setBookForm({ ...bookForm, publicationYear: Number(e.target.value) })}
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none focus:border-[#92400e]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-stone-700 font-medium mb-1">Số Trang</label>
-                <input
-                  type="number"
-                  value={bookForm.pageCount}
-                  onChange={(e) => setBookForm({ ...bookForm, pageCount: Number(e.target.value) })}
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none focus:border-[#92400e]"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-stone-700 font-medium mb-1">Đường Dẫn Ảnh Bìa</label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  value={bookForm.coverImageUrl}
-                  onChange={(e) => setBookForm({ ...bookForm, coverImageUrl: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none focus:border-[#92400e]"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-stone-700 font-medium mb-1">Tóm Tắt Nội Dung / Chú Giải</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Mô tả / Tóm tắt</label>
                 <textarea
-                  rows={3}
                   value={bookForm.description}
                   onChange={(e) => setBookForm({ ...bookForm, description: e.target.value })}
-                  placeholder="Tóm tắt ngắn gọn phục vụ thẻ tra cứu mục lục..."
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none focus:border-[#92400e]"
+                  rows={3}
+                  className="ui-input"
+                  placeholder="Nội dung tóm tắt ấn bản..."
                 />
               </div>
-            </div>
 
-            <div className="flex justify-end space-x-2 pt-3 border-t border-[#e6e0d4]">
-              <button
-                type="button"
-                onClick={() => setShowAddBookModal(false)}
-                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded text-xs transition cursor-pointer"
-              >
-                Hủy Bỏ
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingBook}
-                className="px-4 py-2 bg-[#92400e] hover:bg-[#78350f] disabled:opacity-50 text-white font-medium rounded text-xs transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
-              >
-                {isSubmittingBook && <RotateCw className="w-3.5 h-3.5 animate-spin" />}
-                <span>{isSubmittingBook ? 'Đang Lưu...' : 'Lưu Sách Vào Mục Lục'}</span>
-              </button>
-            </div>
-          </form>
+              <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowAddBookModal(false)}
+                  className="btn-secondary rounded-lg"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingBook}
+                  className="btn-primary rounded-lg"
+                >
+                  {isSubmittingBook ? 'Đang lưu...' : 'Lưu đầu sách'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
-      {/* Edit Book Modal with Direct Author Input saved to DB */}
+      {/* Modal Edit Book */}
       {showEditBookModal && editingBook && (
-        <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <form
-            onSubmit={handleUpdateBook}
-            noValidate
-            className="aged-paper border border-[#ded5c2] rounded-lg max-w-lg w-full p-6 shadow-2xl space-y-4 my-8 font-serif-data"
-          >
-            <div className="flex items-center justify-between border-b-2 border-[#b8ac95] pb-3">
-              <div>
-                <h3 className="font-bold text-stone-900 text-lg font-serif-display">Chỉnh Sửa Ấn Bản &amp; Tác Giả</h3>
-                <p className="text-xs text-stone-600 font-serif">Cập nhật hồ sơ lưu trữ và lưu thông tin tác giả vào cơ sở dữ liệu</p>
-              </div>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-[#0d1322] border border-white/10 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="text-lg font-bold text-white">Chỉnh sửa Đầu Sách</h3>
               <button
                 type="button"
-                onClick={() => {
-                  setShowEditBookModal(false);
-                  setEditingBook(null);
-                }}
-                className="text-stone-400 hover:text-stone-700 cursor-pointer"
+                onClick={() => setShowEditBookModal(false)}
+                className="text-slate-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="col-span-2">
-                <label className="block text-stone-700 font-medium mb-1">Tựa Sách *</label>
+            <form onSubmit={handleUpdateBook} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Tựa sách *</label>
                 <input
                   type="text"
                   value={editBookForm.title}
-                  onChange={(e) => {
-                    setEditBookForm({ ...editBookForm, title: e.target.value });
-                    if (editBookErrors.title) setEditBookErrors({ ...editBookErrors, title: '' });
-                  }}
-                  className={`w-full px-3 py-2 bg-[#fbf9f5] border rounded text-stone-900 focus:outline-none ${
-                    editBookErrors.title ? 'border-red-500' : 'border-[#dcd6c8] focus:border-[#92400e]'
-                  }`}
+                  onChange={(e) => setEditBookForm({ ...editBookForm, title: e.target.value })}
+                  className="ui-input"
                 />
-                {editBookErrors.title && (
-                  <p className="text-[11px] text-red-600 mt-1">{editBookErrors.title}</p>
-                )}
+                {editBookErrors.title && <p className="text-xs text-rose-400 mt-1">{editBookErrors.title}</p>}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">ISBN *</label>
+                  <input
+                    type="text"
+                    value={editBookForm.isbn}
+                    onChange={(e) => setEditBookForm({ ...editBookForm, isbn: e.target.value })}
+                    className="ui-input font-mono"
+                  />
+                  {editBookErrors.isbn && <p className="text-xs text-rose-400 mt-1">{editBookErrors.isbn}</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">Năm xuất bản</label>
+                  <input
+                    type="number"
+                    value={editBookForm.publicationYear}
+                    onChange={(e) => setEditBookForm({ ...editBookForm, publicationYear: parseInt(e.target.value, 10) || 2024 })}
+                    className="ui-input"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-stone-700 font-medium mb-1">Mã ISBN *</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Tác giả *</label>
                 <input
                   type="text"
-                  value={editBookForm.isbn}
-                  onChange={(e) => {
-                    setEditBookForm({ ...editBookForm, isbn: e.target.value });
-                    if (editBookErrors.isbn) setEditBookErrors({ ...editBookErrors, isbn: '' });
-                  }}
-                  className={`w-full px-3 py-2 bg-[#fbf9f5] border rounded text-stone-900 font-mono focus:outline-none ${
-                    editBookErrors.isbn ? 'border-red-500' : 'border-[#dcd6c8] focus:border-[#92400e]'
-                  }`}
-                />
-                {editBookErrors.isbn && (
-                  <p className="text-[11px] text-red-600 mt-1">{editBookErrors.isbn}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-stone-700 font-medium mb-1">Ngôn Ngữ</label>
-                <input
-                  type="text"
-                  value={editBookForm.language}
-                  onChange={(e) => setEditBookForm({ ...editBookForm, language: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none focus:border-[#92400e]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-stone-700 font-medium mb-1">Phân Loại Chuyên Ngành</label>
-                <select
-                  value={editBookForm.categoryId}
-                  onChange={(e) => setEditBookForm({ ...editBookForm, categoryId: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none cursor-pointer"
-                >
-                  <option value="">Chọn ngành phân loại...</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-stone-700 font-medium mb-1">Nhà Xuất Bản</label>
-                <select
-                  value={editBookForm.publisherId}
-                  onChange={(e) => setEditBookForm({ ...editBookForm, publisherId: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none cursor-pointer"
-                >
-                  <option value="">Chọn nhà xuất bản...</option>
-                  {publishers.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Author Input Field (Saved Directly to DB) */}
-              <div className="col-span-2">
-                <label className="block text-stone-700 font-medium mb-1 font-serif">
-                  Tác Giả * (Ô Nhập Văn Bản Lưu Vào CSDL)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Nhập tên tác giả (ví dụ: Nguyễn Du, Nam Cao, Donald E. Knuth)..."
                   value={editBookForm.authorInput}
-                  onChange={(e) => {
-                    setEditBookForm({ ...editBookForm, authorInput: e.target.value });
-                    if (editBookErrors.authorInput) setEditBookErrors({ ...editBookErrors, authorInput: '' });
-                  }}
-                  className={`w-full px-3 py-2 bg-[#fbf9f5] border rounded text-stone-900 focus:outline-none font-serif ${
-                    editBookErrors.authorInput ? 'border-red-500' : 'border-[#dcd6c8] focus:border-[#92400e]'
-                  }`}
+                  onChange={(e) => setEditBookForm({ ...editBookForm, authorInput: e.target.value })}
+                  className="ui-input"
                 />
-                {editBookErrors.authorInput ? (
-                  <p className="text-[11px] text-red-600 mt-1">{editBookErrors.authorInput}</p>
-                ) : (
-                  <span className="text-[10px] text-stone-500 font-serif">
-                    Nhập tên tác giả bằng ô nhập này để tự động cập nhật bảng Tác giả và liên kết trong CSDL. Phân cách nhiều tác giả bằng dấu phẩy (,).
-                  </span>
-                )}
+                {editBookErrors.authorInput && <p className="text-xs text-rose-400 mt-1">{editBookErrors.authorInput}</p>}
               </div>
 
-              <div>
-                <label className="block text-stone-700 font-medium mb-1">Năm Xuất Bản</label>
-                <input
-                  type="number"
-                  value={editBookForm.publicationYear}
-                  onChange={(e) => setEditBookForm({ ...editBookForm, publicationYear: Number(e.target.value) })}
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none focus:border-[#92400e]"
-                />
+              <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowEditBookModal(false)}
+                  className="btn-secondary rounded-lg"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingEdit}
+                  className="btn-primary rounded-lg"
+                >
+                  {isSubmittingEdit ? 'Đang cập nhật...' : 'Cập nhật sách'}
+                </button>
               </div>
-
-              <div>
-                <label className="block text-stone-700 font-medium mb-1">Số Trang</label>
-                <input
-                  type="number"
-                  value={editBookForm.pageCount}
-                  onChange={(e) => setEditBookForm({ ...editBookForm, pageCount: Number(e.target.value) })}
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none focus:border-[#92400e]"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-stone-700 font-medium mb-1">Đường Dẫn Ảnh Bìa</label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  value={editBookForm.coverImageUrl}
-                  onChange={(e) => setEditBookForm({ ...editBookForm, coverImageUrl: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none focus:border-[#92400e]"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-stone-700 font-medium mb-1">Tóm Tắt Nội Dung</label>
-                <textarea
-                  rows={3}
-                  value={editBookForm.description}
-                  onChange={(e) => setEditBookForm({ ...editBookForm, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none focus:border-[#92400e]"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-2 pt-3 border-t border-[#ded5c2]">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowEditBookModal(false);
-                  setEditingBook(null);
-                }}
-                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded text-xs transition cursor-pointer"
-              >
-                Hủy Bỏ
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingEdit}
-                className="px-4 py-2 bg-[#92400e] hover:bg-[#78350f] disabled:opacity-50 text-white font-medium rounded text-xs transition flex items-center space-x-1.5 cursor-pointer shadow-xs"
-              >
-                {isSubmittingEdit && <RotateCw className="w-3.5 h-3.5 animate-spin" />}
-                <span>{isSubmittingEdit ? 'Đang Lưu...' : 'Lưu Thay Đổi Vào CSDL'}</span>
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
 
-      {/* Add Physical Copy Modal */}
+      {/* Modal Add Copy */}
       {showAddCopyModal && copyBookTarget && (
-        <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <form
-            onSubmit={handleAddCopy}
-            noValidate
-            className="aged-paper border border-[#ded5c2] rounded-lg max-w-sm w-full p-5 shadow-2xl space-y-4 font-serif-data"
-          >
-            <div className="flex items-center justify-between border-b-2 border-[#b8ac95] pb-2">
-              <h3 className="font-bold text-stone-900 text-sm font-serif-display">Thêm Bản Sao Vào Giá Sách</h3>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-[#0d1322] border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-white">Thêm Bản Sao Vật Lý</h3>
+                <p className="text-xs text-indigo-400">{copyBookTarget.title}</p>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowAddCopyModal(false)}
-                className="text-stone-400 hover:text-stone-700 cursor-pointer"
+                className="text-slate-400 hover:text-white"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-xs text-stone-800 font-serif font-medium">Ấn phẩm: {copyBookTarget.title}</p>
-            <div className="space-y-3 text-xs">
+
+            <form onSubmit={handleAddCopy} className="space-y-4">
               <div>
-                <label className="block text-stone-700 font-medium mb-1">Mã Vạch Lưu Chiểu *</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Mã bản sao / Mã vạch *</label>
                 <input
                   type="text"
-                  placeholder="Ví dụ: LIB-000456"
                   value={copyCodeInput}
-                  onChange={(e) => {
-                    setCopyCodeInput(e.target.value);
-                    if (copyErrors.copyCode) setCopyErrors({ ...copyErrors, copyCode: '' });
-                  }}
-                  className={`w-full px-3 py-2 bg-[#fbf9f5] border rounded text-stone-900 font-mono focus:outline-none ${
-                    copyErrors.copyCode ? 'border-red-500' : 'border-[#dcd6c8] focus:border-[#92400e]'
-                  }`}
+                  onChange={(e) => setCopyCodeInput(e.target.value)}
+                  placeholder="VD: CPY-1002"
+                  className="ui-input font-mono uppercase"
                 />
-                {copyErrors.copyCode && (
-                  <p className="text-[11px] text-red-600 mt-1">{copyErrors.copyCode}</p>
-                )}
+                {copyErrors.copyCode && <p className="text-xs text-rose-400 mt-1">{copyErrors.copyCode}</p>}
               </div>
+
               <div>
-                <label className="block text-stone-700 font-medium mb-1">Vị Trí Trên Giá Sách</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Vị trí giá sách</label>
                 <input
                   type="text"
-                  placeholder="Ví dụ: Tầng 2, Dãy A3-12"
                   value={shelfLocationInput}
                   onChange={(e) => setShelfLocationInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#fbf9f5] border border-[#dcd6c8] rounded text-stone-900 focus:outline-none focus:border-[#92400e]"
+                  placeholder="VD: Giá A1 - Tầng 2"
+                  className="ui-input"
                 />
               </div>
-            </div>
-            <div className="flex justify-end space-x-2 pt-3 border-t border-[#e6e0d4]">
-              <button
-                type="button"
-                onClick={() => setShowAddCopyModal(false)}
-                className="px-3 py-1.5 bg-stone-100 text-stone-700 hover:bg-stone-200 rounded text-xs cursor-pointer"
-              >
-                Hủy
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingCopy}
-                className="px-3.5 py-1.5 bg-[#92400e] hover:bg-[#78350f] disabled:opacity-50 text-white font-medium rounded text-xs flex items-center space-x-1.5 cursor-pointer shadow-xs"
-              >
-                {isSubmittingCopy && <RotateCw className="w-3.5 h-3.5 animate-spin" />}
-                <span>{isSubmittingCopy ? 'Đang Đăng Ký...' : 'Đăng Ký Bản Sao'}</span>
-              </button>
-            </div>
-          </form>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowAddCopyModal(false)}
+                  className="btn-secondary rounded-lg"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingCopy}
+                  className="btn-primary rounded-lg"
+                >
+                  {isSubmittingCopy ? 'Đang thêm...' : 'Thêm bản sao'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
   );
 };
+

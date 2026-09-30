@@ -4,7 +4,7 @@ import { Reservation } from '../types/index.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { useToast } from '../context/ToastContext.tsx';
 import { DataTable, Column } from './common/DataTable.tsx';
-import { Bookmark, Clock, CheckCircle2, ShieldCheck, Library } from 'lucide-react';
+import { Bookmark } from 'lucide-react';
 
 export const ReservationsView: React.FC = () => {
   const { user } = useAuth();
@@ -15,9 +15,10 @@ export const ReservationsView: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [cancellingId, setCancellingId] = useState<number | null>(null);
 
-  const isStaff = user?.role === 'ADMIN' || user?.role === 'LIBRARIAN';
+  const isStaff = user?.role === 'SUPERADMIN' || user?.role === 'ADMIN' || user?.role === 'LIBRARIAN';
 
   const fetchReservations = async () => {
+    if (!user) return;
     setLoading(true);
     try {
       const res = await api.getReservations({
@@ -26,7 +27,9 @@ export const ReservationsView: React.FC = () => {
       });
       setReservations(res.content || []);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to retrieve reservations.');
+      if (err.statusCode !== 403 && err.statusCode !== 401) {
+        toast.error(err.message || 'Không thể lấy danh sách đặt trước.');
+      }
     } finally {
       setLoading(false);
     }
@@ -34,17 +37,30 @@ export const ReservationsView: React.FC = () => {
 
   useEffect(() => {
     fetchReservations();
-  }, [filterStatus]);
+  }, [filterStatus, user]);
+
+  const handleStatusChange = async (id: number, newStatus: string) => {
+    setCancellingId(id);
+    try {
+      await api.updateReservationStatus(id, newStatus);
+      toast.success('Đã cập nhật trạng thái đặt trước thành công.', 'Thành công');
+      fetchReservations();
+    } catch (err: any) {
+      toast.error(err.message || 'Không thể cập nhật trạng thái.');
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   const handleCancel = async (id: number) => {
     if (!confirm('Bạn có chắc chắn muốn hủy yêu cầu đặt trước này?')) return;
     setCancellingId(id);
     try {
       await api.cancelReservation(id);
-      toast.success('Đã hủy yêu cầu đặt trước thành công.', 'Đã Hủy Đặt Trước');
+      toast.success('Đã hủy yêu cầu đặt trước.', 'Thành công');
       fetchReservations();
     } catch (err: any) {
-      toast.error(err.message || 'Không thể hủy yêu cầu đặt trước.');
+      toast.error(err.message || 'Không thể hủy đặt trước.');
     } finally {
       setCancellingId(null);
     }
@@ -53,14 +69,14 @@ export const ReservationsView: React.FC = () => {
   const columns: Column<Reservation>[] = [
     {
       key: 'bookTitle',
-      header: 'Tựa Sách & Mã Mục Lục',
+      header: 'Tựa Sách & ISBN',
       sortable: true,
       render: (r) => (
         <div>
-          <div className="font-bold text-stone-900 font-serif text-sm leading-snug line-clamp-1">
+          <div className="font-semibold text-white text-sm">
             {r.book.title}
           </div>
-          <div className="text-[11px] font-mono text-stone-600 mt-0.5">ISBN {r.book.isbn}</div>
+          <div className="text-[11px] font-mono text-indigo-300 mt-0.5">ISBN: {r.book.isbn}</div>
         </div>
       ),
     },
@@ -72,8 +88,8 @@ export const ReservationsView: React.FC = () => {
             sortable: true,
             render: (r: Reservation) => (
               <div>
-                <div className="font-bold text-stone-900 font-serif text-sm">{r.member?.fullName || 'Độc giả tự do'}</div>
-                <div className="text-[11px] text-stone-600 truncate max-w-[150px] font-sans">{r.member?.email || 'N/A'}</div>
+                <div className="font-semibold text-white text-sm">{r.member?.fullName || '—'}</div>
+                <div className="text-[11px] text-slate-400 truncate max-w-[150px]">{r.member?.email || 'N/A'}</div>
               </div>
             ),
           },
@@ -85,65 +101,57 @@ export const ReservationsView: React.FC = () => {
       sortable: true,
       align: 'center',
       render: (r) => (
-        <span
-          className={`font-serif text-xs font-bold ${
-            r.status === 'READY'
-              ? 'text-emerald-800 bg-[#edf7ed] px-2.5 py-0.5 rounded border border-emerald-300'
-              : r.status === 'PENDING'
-              ? 'text-amber-900 bg-[#fffbeb] px-2.5 py-0.5 rounded border border-amber-300'
-              : 'text-stone-500'
-          }`}
-        >
-          {r.status === 'READY' ? 'Sẵn Sàng Nhận' : r.status === 'PENDING' ? `Hàng Đợi #${r.queuePosition}` : '—'}
+        <span className={`badge ${
+          r.status === 'READY' ? 'badge-green' : r.status === 'PENDING' ? 'badge-yellow' : 'badge-gray'
+        }`}>
+          {r.status === 'READY' ? 'Sẵn sàng nhận' : r.status === 'PENDING' ? `Hàng đợi #${r.queuePosition}` : '—'}
         </span>
       ),
     },
     {
       key: 'reservationDate',
-      header: 'Ngày Đặt Trước',
+      header: 'Ngày Đặt',
       sortable: true,
-      render: (r) => <span className="text-stone-800 font-serif font-medium text-xs">{r.reservationDate}</span>,
+      render: (r) => <span className="text-slate-300 text-xs">{r.reservationDate ? new Date(r.reservationDate).toLocaleDateString('vi-VN') : '—'}</span>,
     },
     {
       key: 'expiryDate',
-      header: 'Hạn Chót Nhận Sách',
+      header: 'Hạn Nhận Sách',
       sortable: true,
       render: (r) => {
-        if (!r.expiryDate) return <span className="text-stone-500 text-xs font-serif italic">Đang chờ trả</span>;
-        return (
-          <span className="font-serif text-xs font-bold text-emerald-900">
-            {r.expiryDate}
-          </span>
-        );
+        if (!r.expiryDate) return <span className="text-slate-400 text-xs italic">Chờ sách khả dụng</span>;
+        return <span className="font-semibold text-indigo-400 text-xs">{r.expiryDate}</span>;
       },
     },
     {
       key: 'status',
       header: 'Trạng Thái',
       sortable: true,
-      render: (r) => (
-        <span
-          className={`text-xs font-serif font-bold ${
-            r.status === 'READY'
-              ? 'text-emerald-800'
-              : r.status === 'PENDING'
-              ? 'text-amber-900'
-              : r.status === 'FULFILLED'
-              ? 'text-stone-700'
-              : 'text-stone-400'
-          }`}
-        >
-          {r.status === 'READY'
-            ? 'SẴN SÀNG'
-            : r.status === 'PENDING'
-            ? 'ĐANG CHỜ'
-            : r.status === 'FULFILLED'
-            ? 'ĐÃ NHẬN'
-            : r.status === 'CANCELLED'
-            ? 'ĐÃ HỦY'
-            : r.status}
-        </span>
-      ),
+      render: (r) => {
+        if (!isStaff) {
+          return (
+            <span className={`badge ${
+              r.status === 'READY' ? 'badge-green' : r.status === 'PENDING' ? 'badge-yellow' : r.status === 'FULFILLED' ? 'badge-blue' : 'badge-gray'
+            }`}>
+              {r.status === 'READY' ? 'SẴN SÀNG' : r.status === 'PENDING' ? 'ĐANG CHỜ' : r.status === 'FULFILLED' ? 'ĐÃ NHẬN' : 'ĐÃ HỦY'}
+            </span>
+          );
+        }
+
+        return (
+          <select
+            value={r.status}
+            disabled={cancellingId === r.id}
+            onChange={(e) => handleStatusChange(r.id, e.target.value)}
+            className="ui-input py-1 px-2 text-xs font-semibold cursor-pointer min-w-[130px] bg-slate-900 border-slate-700 text-white rounded-lg"
+          >
+            <option value="PENDING" className="bg-slate-900 text-amber-400 font-bold">ĐANG CHỜ</option>
+            <option value="READY" className="bg-slate-900 text-emerald-400 font-bold">SẮN SÀNG NHẬN</option>
+            <option value="FULFILLED" className="bg-slate-900 text-blue-400 font-bold">ĐÃ NHẬN SÁCH</option>
+            <option value="CANCELLED" className="bg-slate-900 text-rose-400 font-bold">ĐÃ HỦY</option>
+          </select>
+        );
+      },
     },
     {
       key: 'actions',
@@ -151,7 +159,7 @@ export const ReservationsView: React.FC = () => {
       align: 'right',
       render: (r) => {
         if (r.status !== 'PENDING' && r.status !== 'READY') {
-          return <span className="text-[11px] text-stone-400">Đã lưu trữ</span>;
+          return <span className="text-[11px] text-slate-400">Đã lưu hồ sơ</span>;
         }
 
         const isCancelling = cancellingId === r.id;
@@ -160,10 +168,9 @@ export const ReservationsView: React.FC = () => {
             type="button"
             disabled={isCancelling}
             onClick={() => handleCancel(r.id)}
-            className="px-2.5 py-1 bg-[#fcfbf7] hover:bg-red-50 hover:text-red-700 hover:border-red-300 text-stone-700 rounded text-[11px] transition border border-[#d5ccba] cursor-pointer disabled:opacity-50 font-serif font-semibold shadow-2xs"
-            title="Hủy đặt trước sách"
+            className="btn-ghost text-rose-400 hover:bg-rose-500/10 py-1 px-2.5 text-xs disabled:opacity-50 rounded-lg"
           >
-            {isCancelling ? 'Đang hủy...' : 'Hủy Đặt'}
+            {isCancelling ? 'Đang hủy...' : 'Hủy đặt'}
           </button>
         );
       },
@@ -173,39 +180,39 @@ export const ReservationsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="aged-paper border border-[#ded5c2] rounded-lg p-6 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="ui-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-white/10">
         <div>
-          <div className="flex items-center gap-2 text-[#92400e] text-xs font-semibold uppercase tracking-wider mb-1 font-serif">
+          <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-1">
             <Bookmark className="w-4 h-4" />
-            <span>Đặt Trước &amp; Giữ Sách</span>
+            <span>Quản Lý Hàng Đợi</span>
           </div>
-          <h1 className="text-2xl font-bold text-stone-900 font-serif-display tracking-tight">
-            Yêu Cầu Đặt Trước &amp; Kệ Sách Đặt
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Danh Sách Đặt Trước Sách
           </h1>
-          <p className="text-xs sm:text-sm text-stone-600 mt-1 font-serif-data">
+          <p className="text-sm text-slate-400 mt-1">
             {isStaff
-              ? 'Theo dõi hàng đợi đặt trước, quản lý sách sẵn sàng nhận tại quầy và giám sát hạn chót'
-              : 'Theo dõi vị trí hàng đợi và nhận các cuốn sách đã đặt khi được chuyển đến kệ giữ sách'}
+              ? 'Theo dõi vị trí hàng đợi đặt trước và tình trạng sách chuẩn bị cho độc giả.'
+              : 'Theo dõi các đầu sách bạn đã đăng ký xếp hàng chờ mượn.'}
           </p>
         </div>
 
         {/* Filter buttons */}
-        <div className="flex items-center space-x-1 bg-[#fcfbf7] p-1 rounded border border-[#d5ccba] text-xs self-start sm:self-auto overflow-x-auto max-w-full font-serif-data">
+        <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-white/10 text-xs self-start sm:self-auto overflow-x-auto">
           {[
-            { id: '', label: 'Tất Cả' },
-            { id: 'READY', label: 'Sẵn Sàng Nhận' },
-            { id: 'PENDING', label: 'Đang Trong Hàng Đợi' },
-            { id: 'FULFILLED', label: 'Đã Nhận' },
-            { id: 'CANCELLED', label: 'Đã Hủy' },
+            { id: '', label: 'Tất cả' },
+            { id: 'READY', label: 'Sẵn sàng' },
+            { id: 'PENDING', label: 'Hàng đợi' },
+            { id: 'FULFILLED', label: 'Đã nhận' },
+            { id: 'CANCELLED', label: 'Đã hủy' },
           ].map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => setFilterStatus(item.id)}
-              className={`px-3 py-1 rounded text-[11px] font-medium transition cursor-pointer font-serif ${
+              className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
                 filterStatus === item.id
-                  ? 'bg-[#92400e] text-white font-bold shadow-xs'
-                  : 'text-stone-700 hover:text-stone-900 hover:bg-[#f2ece0]'
+                  ? 'bg-indigo-600 text-white font-bold shadow-md'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               {item.label}
@@ -219,13 +226,13 @@ export const ReservationsView: React.FC = () => {
         columns={columns}
         data={reservations}
         loading={loading}
-        emptyTitle={filterStatus ? `Không có yêu cầu đặt trước nào (${filterStatus})` : 'Không có yêu cầu đặt trước nào trong hàng đợi'}
+        emptyTitle={filterStatus ? `Không có bản ghi (${filterStatus})` : 'Không có yêu cầu đặt trước nào'}
         emptyDescription={
           isStaff
-            ? 'Hiện không có bản ghi đặt trước nào của độc giả phù hợp với bộ lọc này.'
-            : 'Bạn chưa đặt trước cuốn sách nào. Hãy ghé thăm mục lục để đặt trước những cuốn sách đang được mượn.'
+            ? 'Hiện chưa có lượt đặt trước nào phù hợp với tiêu chí lọc.'
+            : 'Bạn chưa đăng ký đặt trước đầu sách nào.'
         }
-        searchPlaceholder="Tìm kiếm theo tựa sách, tác giả hoặc độc giả..."
+        searchPlaceholder="Tìm theo tựa sách, ISBN, tên độc giả..."
         searchFilter={(item, query) => {
           const q = query.toLowerCase();
           return Boolean(
@@ -239,3 +246,4 @@ export const ReservationsView: React.FC = () => {
     </div>
   );
 };
+

@@ -113,11 +113,11 @@ export function DataTable<T extends Record<string, any>>({
   return (
     <div className="space-y-3">
       {/* Table Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 aged-paper-card p-3 rounded-lg border border-[#ded5c2] shadow-2xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 ui-card p-3 border border-white/10">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           {searchFilter && (
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
@@ -126,7 +126,7 @@ export function DataTable<T extends Record<string, any>>({
                   setCurrentPage(1);
                 }}
                 placeholder={searchPlaceholder}
-                className="w-full bg-[#fcfbf7] border border-[#d5ccba] rounded pl-9 pr-3 py-1.5 text-xs text-stone-900 font-serif-data placeholder-stone-400 focus:outline-none focus:border-[#92400e] transition"
+                className="w-full bg-slate-900/90 border border-slate-700/80 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition"
               />
             </div>
           )}
@@ -139,7 +139,7 @@ export function DataTable<T extends Record<string, any>>({
           <button
             type="button"
             onClick={() => setDensity(density === 'compact' ? 'comfortable' : 'compact')}
-            className="p-1.5 bg-[#fcfbf7] hover:bg-[#f1ebe0] text-stone-700 hover:text-stone-900 border border-[#d5ccba] rounded text-xs flex items-center gap-1 transition cursor-pointer font-serif-data"
+            className="p-1.5 bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 rounded-lg text-xs flex items-center gap-1 transition cursor-pointer"
             title={`Chuyển chế độ hiển thị (${density === 'compact' ? 'Gọn gàng' : 'Thoáng đãng'})`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -148,8 +148,8 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      {/* Main Ledger Table Container with Aged Paper Texture */}
-      <div className="aged-paper border border-[#ded5c2] rounded-lg overflow-hidden shadow-xs">
+      {/* Main Ledger Table Container */}
+      <div className="ui-card border border-white/10 overflow-hidden shadow-xl">
         {loading ? (
           <TableSkeleton rows={pageSize > 10 ? 10 : pageSize} cols={columns.length} />
         ) : paginatedData.length === 0 ? (
@@ -161,14 +161,14 @@ export function DataTable<T extends Record<string, any>>({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="ledger-header bg-[#f2ece0] text-stone-900 uppercase tracking-wider font-serif-display font-bold select-none">
+              <thead className="bg-slate-900/90 text-indigo-300 uppercase tracking-wider font-semibold select-none border-b border-white/10">
                 <tr>
                   {columns.map((col) => (
                     <th
                       key={col.key}
                       onClick={() => handleSort(col.key, col.sortable)}
                       className={`px-4 py-3 text-[11px] ${
-                        col.sortable ? 'cursor-pointer hover:text-[#92400e] transition' : ''
+                        col.sortable ? 'cursor-pointer hover:text-white transition' : ''
                       } ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'} ${
                         col.className || ''
                       }`}
@@ -180,15 +180,15 @@ export function DataTable<T extends Record<string, any>>({
                       >
                         <span>{col.header}</span>
                         {col.sortable && (
-                          <span className="text-stone-400">
+                          <span className="text-slate-500">
                             {sortKey === col.key ? (
                               sortDirection === 'asc' ? (
-                                <ArrowUp className="w-3.5 h-3.5 text-[#92400e]" />
+                                <ArrowUp className="w-3.5 h-3.5 text-indigo-400" />
                               ) : (
-                                <ArrowDown className="w-3.5 h-3.5 text-[#92400e]" />
+                                <ArrowDown className="w-3.5 h-3.5 text-indigo-400" />
                               )
                             ) : (
-                              <ArrowUpDown className="w-3 h-3 hover:text-stone-700" />
+                              <ArrowUpDown className="w-3 h-3 hover:text-slate-300" />
                             )}
                           </span>
                         )}
@@ -197,11 +197,11 @@ export function DataTable<T extends Record<string, any>>({
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#e7dfcf] text-stone-900 font-serif-data">
+              <tbody className="divide-y divide-white/5 text-slate-200">
                 {paginatedData.map((item, index) => (
                   <tr
                     key={keyExtractor(item, index)}
-                    className="ledger-row transition duration-150"
+                    className="hover:bg-indigo-500/10 transition duration-150"
                   >
                     {columns.map((col) => (
                       <td
@@ -220,16 +220,16 @@ export function DataTable<T extends Record<string, any>>({
           </div>
         )}
 
-        {/* Table Pagination Footer with Ledger Double Border Treatment */}
+        {/* Table Pagination Footer */}
         {!loading && totalItems > 0 && (
-          <div className="ledger-summary-double px-4 py-3 bg-[#f6f0e2] border-t-2 border-[#b5a790] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-700 font-serif-data">
+          <div className="px-4 py-3 bg-slate-900/90 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
             <div className="flex items-center gap-2">
               <span>
-                Hiển thị <strong className="text-stone-900 font-bold font-serif">{startEntry}</strong> đến{' '}
-                <strong className="text-stone-900 font-bold font-serif">{endEntry}</strong> trong tổng số{' '}
-                <strong className="text-stone-900 font-bold font-serif">{totalItems}</strong> bản ghi
+                Hiển thị <strong className="text-white">{startEntry}</strong> đến{' '}
+                <strong className="text-white">{endEntry}</strong> trong tổng số{' '}
+                <strong className="text-white">{totalItems}</strong> bản ghi
               </span>
-              <span className="text-stone-300">|</span>
+              <span className="text-slate-600">|</span>
               <div className="flex items-center gap-1.5">
                 <span>Số dòng:</span>
                 <select
@@ -238,10 +238,10 @@ export function DataTable<T extends Record<string, any>>({
                     setPageSize(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="bg-[#fcfbf7] border border-[#d5ccba] rounded px-1.5 py-0.5 text-stone-900 focus:outline-none focus:border-[#92400e] font-serif"
+                  className="bg-slate-950 border border-slate-700/80 rounded px-2 py-0.5 text-white focus:outline-none focus:border-indigo-500"
                 >
                   {pageSizeOptions.map((opt) => (
-                    <option key={opt} value={opt}>
+                    <option key={opt} value={opt} className="bg-slate-900 text-white">
                       {opt}
                     </option>
                   ))}
@@ -254,13 +254,13 @@ export function DataTable<T extends Record<string, any>>({
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={validPage <= 1}
-                className="p-1 rounded border border-[#d5ccba] bg-[#fcfbf7] text-stone-700 hover:bg-[#f1ebe0] disabled:opacity-40 disabled:pointer-events-none transition cursor-pointer"
+                className="p-1 rounded border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none transition cursor-pointer"
                 title="Trang trước"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
-              <span className="px-2.5 py-0.5 text-xs font-semibold text-stone-800 font-serif">
+              <span className="px-2.5 py-0.5 text-xs font-semibold text-white">
                 Trang {validPage} / {totalPages}
               </span>
 
@@ -268,7 +268,7 @@ export function DataTable<T extends Record<string, any>>({
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={validPage >= totalPages}
-                className="p-1 rounded border border-[#d5ccba] bg-[#fcfbf7] text-stone-700 hover:bg-[#f1ebe0] disabled:opacity-40 disabled:pointer-events-none transition cursor-pointer"
+                className="p-1 rounded border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none transition cursor-pointer"
                 title="Trang sau"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -280,3 +280,4 @@ export function DataTable<T extends Record<string, any>>({
     </div>
   );
 }
+

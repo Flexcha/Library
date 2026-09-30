@@ -14,23 +14,21 @@ import { FinesView } from './components/FinesView.tsx';
 import { ReportsDashboard } from './components/ReportsDashboard.tsx';
 import { UserManagement } from './components/UserManagement.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
-import { MapPin, Phone, Mail, Clock, Library, Shield } from 'lucide-react';
+import { BookOpen, MapPin, Clock, Shield } from 'lucide-react';
 
 function MainLayout() {
   const [activeTab, setActiveTab] = useState<string>('home');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Search and filter parameters to pass from Home / Collections to Catalog
   const [catalogQuery, setCatalogQuery] = useState('');
   const [catalogCategoryId, setCatalogCategoryId] = useState('');
   const [targetBookId, setTargetBookId] = useState<number | null>(null);
 
   const { user } = useAuth();
 
-  const isStaff = user?.role === 'ADMIN' || user?.role === 'LIBRARIAN';
-  const isAdmin = user?.role === 'ADMIN';
+  const isStaff = user?.role === 'SUPERADMIN' || user?.role === 'ADMIN' || user?.role === 'LIBRARIAN';
+  const isAdmin = user?.role === 'SUPERADMIN' || user?.role === 'ADMIN';
 
-  // Handler for searching from the Library Homepage
   const handleHomeSearch = (query: string, categoryId?: string) => {
     setCatalogQuery(query);
     setCatalogCategoryId(categoryId || '');
@@ -38,13 +36,11 @@ function MainLayout() {
     setActiveTab('catalog');
   };
 
-  // Handler for opening a specific book from Homepage or Collections
   const handleOpenBook = (bookId: number) => {
     setTargetBookId(bookId);
     setActiveTab('catalog');
   };
 
-  // Handler for exploring a specific category from Collections
   const handleExploreCategory = (categoryName: string) => {
     setCatalogQuery(categoryName);
     setCatalogCategoryId('');
@@ -55,37 +51,41 @@ function MainLayout() {
   const isStaffTab = ['circulation', 'reservations', 'fines', 'dashboard', 'users'].includes(activeTab);
 
   return (
-    <div className="min-h-screen bg-[#f8f6f0] text-stone-900 flex flex-col font-sans selection:bg-[#fef3c7] selection:text-[#78350f]">
-      {/* Navigation Bar */}
+    <div className="min-h-screen flex flex-col bg-[#090d16] text-[#f3f4f6]">
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         openAuthModal={() => setIsAuthModalOpen(true)}
       />
 
-      {/* Staff View Banner indicator when staff is working on back-office operations */}
+      {/* Staff Banner */}
       {isStaffTab && (
-        <div className="bg-[#f4f0e6] border-b border-[#e6e0d4] py-2 px-4 text-xs">
+        <div className="bg-[#1e1b4b]/60 border-b border-[#6366f1]/30 backdrop-blur-md px-4 py-2.5">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2 text-stone-700">
-              <Shield className="w-4 h-4 text-[#92400e]" />
-              <span className="font-semibold text-stone-900">Cổng Quản Trị Nhân Viên:</span>
-              <span className="capitalize">{activeTab === 'circulation' ? 'Bàn Lưu Thông & Mượn Trả' : activeTab === 'reservations' ? 'Hàng Đợi Giữ Sách' : activeTab === 'fines' ? 'Quản Lý Tiền Phạt' : activeTab === 'dashboard' ? 'Báo Cáo Hoạt Động' : 'Quản Trị Người Dùng'}</span>
+            <div className="flex items-center gap-2.5 text-sm">
+              <Shield className="w-4 h-4 text-[#818cf8]" />
+              <span className="text-[#94a3b8]">Phân Phân Quyền Nghiệp Vụ:</span>
+              <span className="text-white font-bold tracking-tight">
+                {activeTab === 'circulation' ? 'Bàn Lưu Thông & Cho Mượn'
+                  : activeTab === 'reservations' ? 'Quản Lý Hàng Đợi Giữ Sách'
+                  : activeTab === 'fines' ? 'Quản Lý Tiền Phạt & Bồi Thường'
+                  : activeTab === 'dashboard' ? 'Báo Cáo & Thống Kê'
+                  : 'Quản Trị Người Dùng'}
+              </span>
             </div>
             <button
               type="button"
               onClick={() => setActiveTab('home')}
-              className="text-[#92400e] hover:underline font-medium cursor-pointer"
+              className="text-sm font-semibold text-[#818cf8] hover:text-white transition cursor-pointer"
             >
-              &larr; Trở về Giao diện Bạn đọc Công cộng
+              ← Về Trang Chủ
             </button>
           </div>
         </div>
       )}
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 1. Public Library Home Front Door */}
         {activeTab === 'home' && (
           <LibraryHome
             onSearch={handleHomeSearch}
@@ -95,7 +95,6 @@ function MainLayout() {
           />
         )}
 
-        {/* 2. Public Catalog Stacks / OPAC */}
         {activeTab === 'catalog' && (
           <CatalogBrowse
             openAuthModal={() => setIsAuthModalOpen(true)}
@@ -105,7 +104,6 @@ function MainLayout() {
           />
         )}
 
-        {/* 3. Curated Collections & Reading Lists */}
         {activeTab === 'collections' && (
           <CuratedCollections
             onOpenBook={handleOpenBook}
@@ -113,7 +111,6 @@ function MainLayout() {
           />
         )}
 
-        {/* 5. Visitor Guide & Library Services */}
         {activeTab === 'services' && (
           <LibraryServices
             openAuthModal={() => setIsAuthModalOpen(true)}
@@ -121,132 +118,99 @@ function MainLayout() {
           />
         )}
 
-        {/* 6. Patron Portal: Virtual Library Card & Loans */}
         {activeTab === 'my-loans' && user && <MyLoans />}
-
-        {/* Staff Administration Portals */}
         {activeTab === 'circulation' && isStaff && <CirculationDesk />}
-
         {activeTab === 'reservations' && (isStaff || user) && <ReservationsView />}
-
         {activeTab === 'fines' && (isStaff || user) && <FinesView />}
-
         {activeTab === 'dashboard' && isStaff && <ReportsDashboard />}
-
         {activeTab === 'users' && isAdmin && <UserManagement />}
       </main>
 
-      {/* Stately Library Footer */}
-      <footer className="border-t-2 border-[#b8ac95] bg-[#f4eee2] text-stone-700 py-10 mt-12 text-xs font-serif-data">
+      {/* Modern Executive Dark Footer */}
+      <footer className="bg-[#0f172a] border-t border-[#1e293b] mt-16 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-[#ded5c2]">
-            {/* Library Colophon */}
-            <div className="md:col-span-2 space-y-2.5">
-              <div className="flex items-center space-x-2">
-                <div className="w-7 h-7 rounded bg-[#92400e] text-white flex items-center justify-center">
-                  <Library className="w-4 h-4 text-white" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-[#1e293b]">
+            {/* Brand */}
+            <div className="md:col-span-2 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#6366f1] to-[#3b82f6] flex items-center justify-center shadow-lg shadow-[#6366f1]/20">
+                  <BookOpen className="w-5 h-5 text-white" />
                 </div>
-                <span className="font-serif-display font-bold text-base text-stone-900">
-                  Thư viện &amp; Viện Lưu trữ Athenaeum
+                <span className="text-white font-bold text-xl tracking-tight">
+                  LibraryOS
                 </span>
               </div>
-              <p className="text-stone-600 leading-relaxed max-w-md text-xs font-serif-data">
-                Thư viện nghiên cứu và phục vụ mượn tài liệu học thuật công cộng, thúc đẩy phát triển văn học,
-                khoa học điện toán, khoa học tự nhiên và tri thức nhân văn. Mục lục tra cứu tuân thủ chặt chẽ
-                tiêu chuẩn phân loại Thập phân Dewey &amp; Thư viện Quốc hội Hoa Kỳ (LOC).
+              <p className="text-[#94a3b8] text-sm leading-relaxed max-w-sm">
+                Hệ thống Quản lý Thư viện Số Doanh nghiệp – Tra cứu, mượn trả, phân tích dữ liệu kho sách thời gian thực.
               </p>
-              <div className="flex items-center gap-3 text-stone-500 pt-1 text-xs">
-                <span>Cổng Thư Viện Mở</span>
-                <span>·</span>
-                <span>Phục vụ Học Giả &amp; Bạn Đọc</span>
+              <div className="flex items-center gap-2 pt-1">
+                <span className="badge badge-green font-mono text-xs">
+                  ● PostgreSQL Engine Active
+                </span>
+                <span className="badge badge-blue font-mono text-xs">
+                  Prisma ORM
+                </span>
               </div>
             </div>
 
-            {/* Hours & Access */}
-            <div className="space-y-2">
-              <h4 className="font-serif-display font-semibold text-stone-900 text-sm">Thời Gian &amp; Địa Điểm</h4>
-              <ul className="space-y-1.5 text-stone-600 text-xs">
-                <li className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-stone-500" />
-                  <span>Thứ Hai – Thứ Bảy: 8:00 – 21:00</span>
+            {/* Hours */}
+            <div className="space-y-3">
+              <h4 className="text-white font-bold text-sm tracking-tight">Giờ Phục Vụ</h4>
+              <ul className="space-y-2 text-[#94a3b8] text-sm">
+                <li className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#818cf8]" />
+                  <span>Thứ 2 – Thứ 7: 08:00 – 21:00</span>
                 </li>
-                <li className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-stone-500" />
+                <li className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#818cf8]" />
                   <span>Chủ Nhật: 10:00 – 18:00</span>
                 </li>
-                <li className="flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-stone-500" />
-                  <span>124 Đường Athenaeum, Quận 1</span>
+                <li className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-[#818cf8]" />
+                  <span>124 Athenaeum, TP. Hồ Chí Minh</span>
                 </li>
               </ul>
             </div>
 
-            {/* Circulation & Services */}
-            <div className="space-y-2">
-              <h4 className="font-serif-display font-semibold text-stone-900 text-sm">Liên Kết Nhanh</h4>
-              <ul className="space-y-1 text-stone-600 text-xs">
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('services')}
-                    className="hover:text-[#92400e] hover:underline cursor-pointer font-semibold text-[#92400e]"
-                  >
-                    Không Gian &amp; Dịch Vụ Thư Viện
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('catalog')}
-                    className="hover:text-[#92400e] hover:underline cursor-pointer"
-                  >
-                    Mục lục Tra cứu Trực tuyến (OPAC)
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('collections')}
-                    className="hover:text-[#92400e] hover:underline cursor-pointer"
-                  >
-                    Danh mục Đọc Tuyển chọn &amp; Khuyên đọc
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('services')}
-                    className="hover:text-[#92400e] hover:underline cursor-pointer"
-                  >
-                    Nội quy Phòng đọc &amp; Dịch vụ Độc giả
-                  </button>
-                </li>
+            {/* Quick Links */}
+            <div className="space-y-3">
+              <h4 className="text-white font-bold text-sm tracking-tight">Danh Mục Tra Cứu</h4>
+              <ul className="space-y-2 text-[#94a3b8] text-sm">
+                {[
+                  { label: 'Tra cứu Catalog', tab: 'catalog' },
+                  { label: 'Bộ sưu tập nổi bật', tab: 'collections' },
+                  { label: 'Hướng dẫn dịch vụ', tab: 'services' },
+                ].map(({ label, tab }) => (
+                  <li key={tab}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab(tab)}
+                      className="hover:text-[#818cf8] transition cursor-pointer"
+                    >
+                      {label}
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
 
-          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-stone-500 text-[11px]">
-            <div>
-              &copy; {new Date().getFullYear()} Hội đồng Quản trị Thư viện Athenaeum. Toàn quyền bảo lưu.
-            </div>
-            <div className="flex items-center space-x-4">
-              <span>Cổng Thư viện Công cộng</span>
-              <span>·</span>
-              <span>Tiêu chuẩn Phân loại Dewey &amp; LOC</span>
-              <span>·</span>
-              <span>Mượn trả &amp; Tiếp cận Phòng Nghiên cứu</span>
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-[#64748b] text-xs">
+              © {new Date().getFullYear()} LibraryOS. Toàn quyền bảo lưu.
+            </p>
+            <div className="flex items-center gap-4 text-[#64748b] text-xs font-mono">
+              <span>PostgreSQL · Prisma ORM · Express API · React UI</span>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* Auth Modal */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
 
-      {/* Toast Notifications */}
       <ToastContainer />
     </div>
   );

@@ -2,20 +2,11 @@ import React from 'react';
 import {
   Clock,
   MapPin,
-  BookOpen,
   Building2,
-  Users,
-  Compass,
-  CheckCircle2,
-  Bookmark,
   Library,
   FileText,
   Phone,
-  Mail,
-  Shield,
-  Layers,
-  Sparkles,
-  Volume2,
+  Compass,
 } from 'lucide-react';
 
 interface LibraryServicesProps {
@@ -23,301 +14,197 @@ interface LibraryServicesProps {
   onExploreCatalog: () => void;
 }
 
-export const LibraryServices: React.FC<LibraryServicesProps> = ({
-  openAuthModal,
-  onExploreCatalog,
-}) => {
+export const LibraryServices: React.FC<LibraryServicesProps> = () => {
   return (
-    <div className="space-y-10 pb-8 font-serif-data">
-      {/* Title */}
-      <div className="bg-white border border-[#e6e0d4] rounded-lg p-6 sm:p-8 shadow-2xs">
-        <div className="flex items-center gap-2 text-[#92400e] text-xs font-semibold uppercase tracking-wider mb-1 font-mono">
+    <div className="space-y-8 pb-8">
+      {/* Title Card */}
+      <div className="ui-card p-6 sm:p-8 space-y-2 border border-white/10">
+        <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
           <Building2 className="w-4 h-4" />
-          <span>Chỉ Dẫn Bạn Đọc &amp; Đặc Quyền Học Thuật</span>
+          <span>Dịch Vụ Thư Viện LibraryOS</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-stone-900 font-serif-display tracking-tight">
-          Hướng Dẫn Thăm Quan &amp; Dịch Vụ Thư Viện Athenaeum
+        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+          Hướng Dẫn & Dịch Vụ Phục Vụ Bạn Đọc
         </h1>
-        <p className="text-xs sm:text-sm text-stone-600 mt-2 max-w-2xl leading-relaxed font-serif">
-          Thư viện Athenaeum trân trọng chào đón mọi học giả, nghiên cứu sinh và bạn đọc. Khám phá các phòng đọc học thuật,
-          không gian nghiên cứu chuyên sâu, tiện ích tra cứu và quy định lưu thông tài liệu.
+        <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
+          Thư viện phục vụ nhu cầu tra cứu, nghiên cứu và học tập của độc giả với hệ thống phòng đọc hiện đại và dịch vụ hỗ trợ chuyên nghiệp.
         </p>
       </div>
 
-      {/* Reading Halls & Scholarly Spaces */}
+      {/* Reading Rooms */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div>
-            <h2 className="text-xl font-bold font-serif-display text-stone-900 flex items-center gap-2">
-              <Library className="w-5 h-5 text-[#92400e]" />
-              <span>Hệ Thống Phòng Đọc &amp; Không Gian Học Thuật</span>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Library className="w-5 h-5 text-indigo-400" />
+              <span>Hệ Thống Phòng Đọc & Không Gian Học Tập</span>
             </h2>
-            <p className="text-xs text-stone-600 font-serif mt-0.5">
-              Hệ thống không gian nghiên cứu tiêu chuẩn với ánh sáng tự nhiên và môi trường học thuật thanh tịnh.
+            <p className="text-xs text-slate-400">
+              Các không gian học tập yên tĩnh, trang bị ổ cắm điện và wifi tốc độ cao.
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Tầng 1 */}
-          <div className="bg-white border border-[#e6e0d4] rounded-lg p-5 shadow-2xs space-y-3">
+          <div className="ui-card p-5 space-y-3 border border-white/10">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#f5efe2] text-stone-700 font-bold border border-[#ded5c2]">
-                Tầng 1 · Sảnh Đón
-              </span>
-              <span className="text-xs text-stone-500 font-mono flex items-center gap-1">
-                <Volume2 className="w-3.5 h-3.5 text-amber-600" />
-                <span>Thảo luận &amp; Trao đổi nhẹ</span>
-              </span>
+              <span className="badge badge-blue">Tầng 1 · Sảnh chính</span>
+              <span className="text-xs text-slate-400">Trao đổi nhóm</span>
             </div>
-            <h3 className="text-base font-bold font-serif-display text-stone-900">
-              Sảnh Đón Tiếp &amp; Quầy Lưu Thông Trung Tâm
+            <h3 className="text-base font-bold text-white">
+              Bàn Lưu Thông & Phòng Học Nhóm
             </h3>
-            <p className="text-xs text-stone-600 leading-relaxed font-serif">
-              Quầy thủ thư tiếp nhận mượn trả tài liệu, đăng ký làm thẻ bạn đọc và các phòng học nhóm đa phương tiện phục vụ thảo luận chuyên đề.
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Quầy thủ thư làm thủ tục mượn trả, đăng ký thẻ bạn đọc và 3 phòng thảo luận nhóm dành cho sinh viên, học giả.
             </p>
-            <div className="pt-2 border-t border-[#f1ede4] flex items-center justify-between text-xs text-stone-600 font-mono">
-              <span>Sức chứa: 20 bàn + 3 phòng nhóm</span>
-              <span className="text-emerald-700 font-semibold">Mở cửa 8:00 – 21:00</span>
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+              <span>Sức chứa: 20 bàn đọc</span>
+              <span className="text-emerald-400 font-semibold">Phục vụ: 08:00 – 21:00</span>
             </div>
           </div>
 
           {/* Tầng 2 */}
-          <div className="bg-white border border-[#e6e0d4] rounded-lg p-5 shadow-2xs space-y-3">
+          <div className="ui-card p-5 space-y-3 border border-white/10">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#fef3c7] text-[#92400e] font-bold border border-[#fde68a]">
-                Tầng 2 · Nghiên Cứu Tổng Hợp
-              </span>
-              <span className="text-xs text-stone-500 font-mono flex items-center gap-1">
-                <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>&lt; 20 dB (Yên tĩnh cao)</span>
-              </span>
+              <span className="badge badge-green">Tầng 2 · Nghiên cứu</span>
+              <span className="text-xs text-slate-400">Yên tĩnh cao</span>
             </div>
-            <h3 className="text-base font-bold font-serif-display text-stone-900">
-              Đại Phòng Đọc &amp; Không Gian Tra Cứu Số
+            <h3 className="text-base font-bold text-white">
+              Đại Phòng Đọc & Khu Tra Cứu Máy Tính
             </h3>
-            <p className="text-xs text-stone-600 leading-relaxed font-serif">
-              Trang bị bàn đọc gỗ sồi tiêu chuẩn, đèn bàn chống lóa, cổng sạc điện nguồn và kết nối mạng nội bộ tốc độ cao phục vụ tra cứu dữ liệu.
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Trang bị bàn đọc cá nhân, đèn chống lóa, cổng kết nối và 15 máy tính tra cứu danh mục trực tuyến.
             </p>
-            <div className="pt-2 border-t border-[#f1ede4] flex items-center justify-between text-xs text-stone-600 font-mono">
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
               <span>Sức chứa: 36 bàn đọc</span>
-              <span className="text-emerald-700 font-semibold">Mở cửa 8:00 – 21:00</span>
+              <span className="text-emerald-400 font-semibold">Phục vụ: 08:00 – 21:00</span>
             </div>
           </div>
 
           {/* Tầng 3 */}
-          <div className="bg-white border border-[#e6e0d4] rounded-lg p-5 shadow-2xs space-y-3">
+          <div className="ui-card p-5 space-y-3 border border-white/10">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#f1ede4] text-stone-700 font-bold border border-[#d6ccb8]">
-                Tầng 3 · Chuyên Sâu
-              </span>
-              <span className="text-xs text-stone-500 font-mono flex items-center gap-1">
-                <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>&lt; 16 dB (Tuyệt đối tĩnh lặng)</span>
-              </span>
+              <span className="badge badge-yellow">Tầng 3 · Chuyên đề</span>
+              <span className="text-xs text-slate-400">Tĩnh lặng</span>
             </div>
-            <h3 className="text-base font-bold font-serif-display text-stone-900">
-              Phòng Đọc Chuyên Đề &amp; Tạp Chí Học Thuật
+            <h3 className="text-base font-bold text-white">
+              Phòng Đọc Tạp Chí & Luận Văn Nghiên Cứu
             </h3>
-            <p className="text-xs text-stone-600 leading-relaxed font-serif">
-              Khu vực dành riêng cho các nhà nghiên cứu, giảng viên và sinh viên thực hiện đồ án, luận văn với các buồng nghiên cứu độc lập.
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Dành riêng cho giảng viên, nghiên cứu sinh chuẩn bị đề tài, luận văn với các cabin làm việc độc lập.
             </p>
-            <div className="pt-2 border-t border-[#f1ede4] flex items-center justify-between text-xs text-stone-600 font-mono">
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
               <span>Sức chứa: 26 buồng tự học</span>
-              <span className="text-emerald-700 font-semibold">Mở cửa 8:00 – 21:00</span>
+              <span className="text-emerald-400 font-semibold">Phục vụ: 08:00 – 21:00</span>
             </div>
           </div>
 
           {/* Tầng 4 */}
-          <div className="bg-white border border-[#e6e0d4] rounded-lg p-5 shadow-2xs space-y-3">
+          <div className="ui-card p-5 space-y-3 border border-white/10">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#fef2f2] text-[#991b1b] font-bold border border-[#fecaca]">
-                Tầng 4 · Phòng Đọc Riêng
-              </span>
-              <span className="text-xs text-stone-500 font-mono flex items-center gap-1">
-                <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Nhiệt độ 18°C · 45% Độ ẩm</span>
-              </span>
+              <span className="badge badge-gray">Tầng 4 · Bảo quản</span>
+              <span className="text-xs text-slate-400">Hạn chế</span>
             </div>
-            <h3 className="text-base font-bold font-serif-display text-stone-900">
-              Phòng Nghiên Cứu Tư Liệu Đặc Biệt &amp; Bản Thảo Quý
+            <h3 className="text-base font-bold text-white">
+              Phòng Nghiên Cứu Tư Liệu Đặc Biệt
             </h3>
-            <p className="text-xs text-stone-600 leading-relaxed font-serif">
-              Khu lưu trữ và nghiên cứu chuyên sâu các văn bản Hán Nôm, bản thảo quý hiếm và tài liệu địa chí với sự hỗ trợ của thủ thư chuyên trách.
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Khu lưu trữ sách hiếm, tài liệu địa chí và bản thảo cổ được bảo quản trong điều kiện nhiệt độ tiêu chuẩn.
             </p>
-            <div className="pt-2 border-t border-[#f1ede4] flex items-center justify-between text-xs text-stone-600 font-mono">
-              <span>Sức chứa: 12 vị trí nghiên cứu</span>
-              <span className="text-stone-700 font-semibold">10:00 – 16:00 (Cần hẹn trước)</span>
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+              <span>Sức chứa: 12 chỗ ngồi</span>
+              <span className="text-indigo-400 font-semibold">Hẹn trước với thủ thư</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Hours & Locations */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white border border-[#e6e0d4] rounded-lg p-6 shadow-2xs space-y-4">
-          <div className="flex items-center gap-2.5 text-[#92400e]">
+      {/* Info Cards Grid */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="ui-card p-6 space-y-4 border border-white/10">
+          <div className="flex items-center gap-2.5 text-indigo-400">
             <Clock className="w-5 h-5" />
-            <h2 className="font-bold font-serif-display text-stone-900 text-base">Thời Gian Mở Cửa</h2>
+            <h2 className="font-bold text-white text-base">Thời Gian Mở Cửa</h2>
           </div>
-          <div className="space-y-2.5 text-xs text-stone-600">
-            <div className="flex justify-between border-b border-[#f1ede4] pb-1.5">
-              <span className="font-medium text-stone-800">Thứ Hai – Thứ Năm</span>
-              <span className="tabular-nums">8:00 – 21:00</span>
+          <div className="space-y-2.5 text-xs text-slate-300">
+            <div className="flex justify-between border-b border-slate-800 pb-1.5">
+              <span className="font-medium text-white">Thứ Hai – Thứ Sáu</span>
+              <span>08:00 – 21:00</span>
             </div>
-            <div className="flex justify-between border-b border-[#f1ede4] pb-1.5">
-              <span className="font-medium text-stone-800">Thứ Sáu – Thứ Bảy</span>
-              <span className="tabular-nums">8:00 – 19:00</span>
+            <div className="flex justify-between border-b border-slate-800 pb-1.5">
+              <span className="font-medium text-white">Thứ Bảy</span>
+              <span>08:00 – 19:00</span>
             </div>
-            <div className="flex justify-between border-b border-[#f1ede4] pb-1.5">
-              <span className="font-medium text-stone-800">Chủ Nhật</span>
-              <span className="tabular-nums">10:00 – 18:00</span>
-            </div>
-            <div className="flex justify-between pt-1">
-              <span className="font-medium text-stone-800">Kho Bản Thảo Quý Hiếm</span>
-              <span className="tabular-nums">10:00 – 16:00</span>
+            <div className="flex justify-between border-b border-slate-800 pb-1.5">
+              <span className="font-medium text-white">Chủ Nhật</span>
+              <span>10:00 – 18:00</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white border border-[#e6e0d4] rounded-lg p-6 shadow-2xs space-y-4">
-          <div className="flex items-center gap-2.5 text-[#92400e]">
+        <div className="ui-card p-6 space-y-4 border border-white/10">
+          <div className="flex items-center gap-2.5 text-indigo-400">
             <MapPin className="w-5 h-5" />
-            <h2 className="font-bold font-serif-display text-stone-900 text-base">Địa Điểm Trụ Sở</h2>
+            <h2 className="font-bold text-white text-base">Địa Điểm Thư Viện</h2>
           </div>
-          <div className="space-y-2 text-xs text-stone-600">
-            <p className="font-semibold text-stone-900">Tòa Nhà Trung Tâm Thư Viện Athenaeum</p>
-            <p>124 Đường Athenaeum, Khu Văn Hóa Quận 1</p>
-            <p>Thành phố Hồ Chí Minh, Việt Nam</p>
-            <div className="pt-2 text-[11px] text-stone-500 space-y-1">
-              <p>• Trạm xe buýt gần nhất: Trạm Trung tâm (Cửa B)</p>
-              <p>• Khu vực gửi xe đạp &amp; xe máy tại Cổng Bắc</p>
-              <p>• Thiết kế tiếp cận cho xe lăn trên toàn bộ các tầng</p>
+          <div className="space-y-2 text-xs text-slate-300">
+            <p className="font-semibold text-white">Tòa nhà Thư Viện Trung Tâm</p>
+            <p>124 Athenaeum, Quận 1, TP. Hồ Chí Minh</p>
+            <div className="pt-2 text-[11px] text-slate-400 space-y-1">
+              <p>• Bãi giữ xe máy & ô tô tại Cổng Nam</p>
+              <p>• Có thang máy và lối đi riêng cho người khuyết tật</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white border border-[#e6e0d4] rounded-lg p-6 shadow-2xs space-y-4">
-          <div className="flex items-center gap-2.5 text-[#92400e]">
+        <div className="ui-card p-6 space-y-4 border border-white/10">
+          <div className="flex items-center gap-2.5 text-indigo-400">
             <Phone className="w-5 h-5" />
-            <h2 className="font-bold font-serif-display text-stone-900 text-base">Liên Hệ &amp; Tư Vấn</h2>
+            <h2 className="font-bold text-white text-base">Liên Hệ Thư Viện</h2>
           </div>
-          <div className="space-y-2 text-xs text-stone-600">
-            <p className="flex items-center justify-between">
-              <span className="font-medium text-stone-800">Bàn Lưu Thông:</span>
-              <span className="font-mono text-stone-700">+84 901 234 567</span>
+          <div className="space-y-2 text-xs text-slate-300">
+            <p className="flex justify-between">
+              <span className="font-medium text-white">Bàn Lưu Thông:</span>
+              <span className="font-mono text-indigo-300">+84 28 3829 1000</span>
             </p>
-            <p className="flex items-center justify-between">
-              <span className="font-medium text-stone-800">Thủ Thư Tư Vấn:</span>
-              <span className="font-mono text-stone-700">+84 907 654 321</span>
+            <p className="flex justify-between">
+              <span className="font-medium text-white">Thủ Thư Tư Vấn:</span>
+              <span className="font-mono text-indigo-300">+84 28 3829 1001</span>
             </p>
-            <p className="flex items-center justify-between">
-              <span className="font-medium text-stone-800">Email Hỗ Trợ:</span>
-              <span className="text-stone-700">info@athenaeum.lib</span>
-            </p>
-            <div className="pt-2 text-[11px] text-[#92400e] font-medium">
-              Bàn tư vấn mục lục và trích dẫn khoa học mở cửa hàng ngày không cần đặt lịch trước.
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Reading Rooms Layout */}
-      <section className="bg-white border border-[#e6e0d4] rounded-xl p-8 shadow-2xs space-y-6">
-        <div className="border-b border-[#f1ede4] pb-4">
-          <div className="flex items-center gap-2 text-[#92400e] text-xs font-semibold uppercase tracking-wider mb-1 font-mono">
-            <Compass className="w-3.5 h-3.5" />
-            <span>Sơ Đồ Phân Bổ Các Tầng &amp; Kho Sách</span>
-          </div>
-          <h2 className="text-2xl font-bold font-serif-display text-stone-900 tracking-tight">
-            Danh Mục Không Gian &amp; Các Tầng Nghiên Cứu
-          </h2>
-          <p className="text-xs sm:text-sm text-stone-600 mt-1">
-            Lập kế hoạch nghiên cứu hiệu quả trên 4 tầng lưu trữ và không gian học thuật của chúng tôi:
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <div className="p-4 bg-[#fbf9f5] border border-[#e6e0d4] rounded-lg space-y-2">
-            <span className="text-[10px] font-mono uppercase text-[#92400e] font-bold">TẦNG 1 · SẢNH CHÍNH</span>
-            <h3 className="font-bold text-stone-900 font-serif-display text-sm">
-              Đại Sảnh Đọc &amp; Bàn Lưu Thông
-            </h3>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Bàn mượn trả chính, trạm tự phục vụ mượn sách, trưng bày sách mới nhập, văn học hư cấu và báo chí định kỳ.
-            </p>
-          </div>
-
-          <div className="p-4 bg-[#fbf9f5] border border-[#e6e0d4] rounded-lg space-y-2">
-            <span className="text-[10px] font-mono uppercase text-[#92400e] font-bold">TẦNG 2 · TẦNG LỬNG</span>
-            <h3 className="font-bold text-stone-900 font-serif-display text-sm">
-              Buồng Đọc Nghiên Cứu Yên Tĩnh
-            </h3>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Kho khoa học máy tính, toán học, khoa học tự nhiên, trang bị ổ cắm điện và đèn bàn đọc cá nhân.
-            </p>
-          </div>
-
-          <div className="p-4 bg-[#fbf9f5] border border-[#e6e0d4] rounded-lg space-y-2">
-            <span className="text-[10px] font-mono uppercase text-[#92400e] font-bold">TẦNG 3 · HÀNH LANG</span>
-            <h3 className="font-bold text-stone-900 font-serif-display text-sm">
-              Triết Học &amp; Lịch Sử Thế Giới
-            </h3>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Chuyên khảo lịch sử, triết học, xã hội học, buồng đọc vi phim tư liệu và phòng tọa đàm nhóm nhỏ.
-            </p>
-          </div>
-
-          <div className="p-4 bg-[#fbf9f5] border border-[#e6e0d4] rounded-lg space-y-2">
-            <span className="text-[10px] font-mono uppercase text-[#92400e] font-bold">TẦNG 4 · LƯU TRỮ</span>
-            <h3 className="font-bold text-stone-900 font-serif-display text-sm">
-              Sách Hiếm &amp; Bản Thảo Quý
-            </h3>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Hầm bảo quản tài liệu đặc biệt kiểm soát nhiệt độ, phòng phục chế sách cổ và bàn khảo sát có giám sát.
+            <p className="flex justify-between">
+              <span className="font-medium text-white">Email Hỗ Trợ:</span>
+              <span className="text-indigo-300">support@libraryos.org</span>
             </p>
           </div>
         </div>
       </section>
 
-      {/* Circulation Guidelines & Fines Policy */}
-      <section className="bg-white border border-[#e6e0d4] rounded-xl p-8 shadow-2xs space-y-6">
-        <div className="border-b border-[#f1ede4] pb-4">
-          <div className="flex items-center gap-2 text-[#92400e] text-xs font-semibold uppercase tracking-wider mb-1 font-mono">
-            <FileText className="w-3.5 h-3.5" />
-            <span>Quy Chuẩn Lưu Thông &amp; Mượn Trả</span>
-          </div>
-          <h2 className="text-2xl font-bold font-serif-display text-stone-900 tracking-tight">
-            Chính Sách Mượn Sách &amp; Trách Nhiệm Độc Giả
-          </h2>
+      {/* Rules */}
+      <section className="ui-card p-6 space-y-4 border border-white/10">
+        <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider border-b border-white/10 pb-3">
+          <FileText className="w-4 h-4" />
+          <span>Quy Định & Hạn Mức Mượn Sách</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-stone-600 leading-relaxed">
-          <div className="space-y-3">
-            <h3 className="font-bold font-serif-display text-stone-900 text-sm">
-              Hạn Mức Mượn &amp; Gia Hạn
-            </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-300 leading-relaxed">
+          <div className="space-y-2">
+            <h3 className="font-bold text-white text-sm">Hạn Mức & Gia Hạn</h3>
             <p>
-              Bạn đọc có thẻ hoạt động tốt được mượn tối đa <strong>5 cuốn sách cùng lúc</strong> với thời hạn mượn
-              tiêu chuẩn là <strong>14 ngày theo lịch</strong>.
+              • Mỗi bạn đọc được mượn tối đa <strong className="text-white">5 đầu sách</strong> cùng lúc.
             </p>
             <p>
-              Sách có thể được gia hạn tối đa <strong>2 lần trực tuyến</strong> qua Cổng Thông Tin Bạn Đọc, miễn là tài liệu
-              chưa bị độc giả khác đặt trước.
+              • Thời hạn mượn tiêu chuẩn là <strong className="text-white">14 ngày</strong>. Bạn đọc có thể gia hạn trực tuyến tối đa 2 lần nếu sách chưa có người xếp hàng đặt trước.
             </p>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="font-bold font-serif-display text-stone-900 text-sm">
-              Phí Trễ Hạn &amp; Bảo Quản Tài Liệu
-            </h3>
+          <div className="space-y-2">
+            <h3 className="font-bold text-white text-sm">Phí Quá Hạn</h3>
             <p>
-              Nhằm khuyến khích việc hoàn trả đúng hạn cho các bạn đọc khác tiếp cận, sách quá hạn sẽ tính phí tượng trưng{' '}
-              <strong>5.000 VNĐ / ngày</strong>.
+              • Sách trả trễ hạn chịu mức phí trễ <strong className="text-rose-400">5.000 VNĐ / ngày / cuốn</strong>.
             </p>
             <p>
-              Độc giả có khoản phạt chưa thanh toán vượt quá 50.000 VNĐ sẽ tạm hoãn quyền mượn sách mới cho đến khi
-              thanh toán hoàn tất tại Bàn Lưu Thông hoặc thanh toán online.
+              • Bạn đọc có khoản tiền phạt quá 50.000 VNĐ cần hoàn tất thanh toán trước khi tiếp tục mượn sách mới.
             </p>
           </div>
         </div>
@@ -325,3 +212,4 @@ export const LibraryServices: React.FC<LibraryServicesProps> = ({
     </div>
   );
 };
+

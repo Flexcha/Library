@@ -4,7 +4,7 @@ import { Fine } from '../types/index.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { useToast } from '../context/ToastContext.tsx';
 import { DataTable, Column } from './common/DataTable.tsx';
-import { CreditCard, CheckCircle2, ShieldCheck, DollarSign, RotateCw, X, Receipt } from 'lucide-react';
+import { CreditCard, RotateCw, X, Receipt } from 'lucide-react';
 
 export const FinesView: React.FC = () => {
   const { user } = useAuth();
@@ -12,7 +12,7 @@ export const FinesView: React.FC = () => {
 
   const [fines, setFines] = useState<Fine[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>('UNPAID');
+  const [statusFilter, setStatusFilter] = useState<string>('');
 
   // Waive Modal
   const [waiveTargetId, setWaiveTargetId] = useState<number | null>(null);
@@ -23,10 +23,11 @@ export const FinesView: React.FC = () => {
   // Paying fine state
   const [payingFineId, setPayingFineId] = useState<number | null>(null);
 
-  const isStaff = user?.role === 'ADMIN' || user?.role === 'LIBRARIAN';
-  const isAdmin = user?.role === 'ADMIN';
+  const isStaff = user?.role === 'SUPERADMIN' || user?.role === 'ADMIN' || user?.role === 'LIBRARIAN';
+  const isAdmin = user?.role === 'SUPERADMIN' || user?.role === 'ADMIN';
 
   const fetchFines = async () => {
+    if (!user) return;
     setLoading(true);
     try {
       const res = await api.getFines({
@@ -35,7 +36,9 @@ export const FinesView: React.FC = () => {
       });
       setFines(res.content || []);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to fetch fines.');
+      if (err.statusCode !== 403 && err.statusCode !== 401) {
+        toast.error(err.message || 'Không thể lấy dữ liệu phí phạt.');
+      }
     } finally {
       setLoading(false);
     }
@@ -49,10 +52,10 @@ export const FinesView: React.FC = () => {
     setPayingFineId(id);
     try {
       await api.payFine(id);
-      toast.success('Đã ghi nhận thanh toán phí phạt thành công.', 'Thanh Toán Thành Công');
+      toast.success('Đã ghi nhận thanh toán phí phạt thành công.', 'Thành Công');
       fetchFines();
     } catch (err: any) {
-      toast.error(err.message || 'Xử lý thanh toán thất bại.');
+      toast.error(err.message || 'Thanh toán thất bại.');
     } finally {
       setPayingFineId(null);
     }
@@ -63,14 +66,14 @@ export const FinesView: React.FC = () => {
     if (!waiveTargetId) return;
 
     if (!waiveReason.trim() || waiveReason.trim().length < 5) {
-      setWaiveError('Vui lòng nêu rõ lý do chính thức để miễn phạt (ít nhất 5 ký tự)');
+      setWaiveError('Vui lòng nêu rõ lý do miễn phạt (tối thiểu 5 ký tự)');
       return;
     }
 
     setIsWaiving(true);
     try {
       await api.waiveFine(waiveTargetId, waiveReason.trim());
-      toast.success('Đã miễn phí phạt thành công theo thẩm quyền Quản trị viên.', 'Đã Miễn Phạt');
+      toast.success('Đã miễn phí phạt thành công.', 'Đã Miễn Phạt');
       setWaiveTargetId(null);
       setWaiveReason('');
       setWaiveError('');
@@ -95,8 +98,8 @@ export const FinesView: React.FC = () => {
             sortable: true,
             render: (f: Fine) => (
               <div>
-                <div className="font-bold text-stone-900 font-serif text-sm">{f.member.fullName}</div>
-                <div className="text-[11px] text-stone-600 truncate max-w-[150px] font-sans">{f.member.email}</div>
+                <div className="font-semibold text-white text-sm">{f.member.fullName}</div>
+                <div className="text-[11px] text-slate-400 truncate max-w-[150px]">{f.member.email}</div>
               </div>
             ),
           },
@@ -104,14 +107,14 @@ export const FinesView: React.FC = () => {
       : []),
     {
       key: 'loanBook',
-      header: 'Tựa Sách & Lượt Mượn',
+      header: 'Tựa Sách',
       sortable: true,
       render: (f) => (
         <div>
-          <div className="font-bold text-stone-900 font-serif text-sm leading-snug line-clamp-1">
-            {f.loan?.bookCopy?.book?.title || `Lượt mượn #${f.loanId}`}
+          <div className="font-semibold text-white text-sm">
+            {f.loan?.bookCopy?.book?.title || `Mã phiếu mượn #${f.loanId}`}
           </div>
-          <div className="text-[11px] font-mono text-stone-600 mt-0.5">
+          <div className="text-[11px] font-mono text-indigo-300 mt-0.5">
             ISBN: {f.loan?.bookCopy?.book?.isbn || 'N/A'}
           </div>
         </div>
@@ -122,28 +125,24 @@ export const FinesView: React.FC = () => {
       header: 'Số Tiền Phạt',
       sortable: true,
       render: (f) => (
-        <span className="font-serif text-sm font-bold text-[#92400e]">
-          {Number(f.amount).toLocaleString()} VND
+        <span className="font-semibold text-rose-400 text-sm">
+          {Number(f.amount).toLocaleString()} VNĐ
         </span>
       ),
     },
     {
       key: 'reason',
-      header: 'Lý Do Phạt',
+      header: 'Lý Do',
       sortable: true,
       render: (f) => {
         const reasonText = f.reason === 'LATE_RETURN'
-          ? 'Quá hạn trả sách'
+          ? 'Trả sách trễ hạn'
           : f.reason === 'DAMAGED_BOOK'
-          ? 'Làm hư hỏng sách'
+          ? 'Hư hỏng sách'
           : f.reason === 'LOST_BOOK'
-          ? 'Làm mất sách'
+          ? 'Mất sách'
           : String(f.reason).replace('_', ' ');
-        return (
-          <span className="text-stone-800 text-xs font-serif font-medium">
-            {reasonText}
-          </span>
-        );
+        return <span className="text-slate-300 text-xs">{reasonText}</span>;
       },
     },
     {
@@ -151,7 +150,7 @@ export const FinesView: React.FC = () => {
       header: 'Ngày Lập Phiếu',
       sortable: true,
       render: (f) => (
-        <span className="text-stone-800 font-serif font-medium text-xs">
+        <span className="text-slate-300 text-xs">
           {new Date(f.issuedDate).toLocaleDateString('vi-VN')}
         </span>
       ),
@@ -161,16 +160,10 @@ export const FinesView: React.FC = () => {
       header: 'Trạng Thái',
       sortable: true,
       render: (f) => (
-        <span
-          className={`text-xs font-serif font-bold ${
-            f.status === 'UNPAID'
-              ? 'text-red-700'
-              : f.status === 'PAID'
-              ? 'text-emerald-800'
-              : 'text-stone-600'
-          }`}
-        >
-          {f.status === 'UNPAID' ? 'CHƯA TRẢ' : f.status === 'PAID' ? 'ĐÃ TRẢ' : f.status === 'WAIVED' ? 'ĐÃ MIỄN' : f.status}
+        <span className={`badge ${
+          f.status === 'UNPAID' ? 'badge-red' : f.status === 'PAID' ? 'badge-green' : 'badge-gray'
+        }`}>
+          {f.status === 'UNPAID' ? 'CHƯA TRẢ' : f.status === 'PAID' ? 'ĐÃ TRẢ' : 'ĐÃ MIỄN'}
         </span>
       ),
     },
@@ -181,8 +174,8 @@ export const FinesView: React.FC = () => {
       render: (f) => {
         if (f.status !== 'UNPAID') {
           return (
-            <span className="text-[11px] text-stone-500">
-              {f.status === 'PAID' && f.paidDate ? `Đã nộp ${new Date(f.paidDate).toLocaleDateString('vi-VN')}` : 'Đã tất toán'}
+            <span className="text-[11px] text-slate-400">
+              {f.status === 'PAID' && f.paidDate ? `Đã nộp ${new Date(f.paidDate).toLocaleDateString('vi-VN')}` : 'Đã miễn'}
             </span>
           );
         }
@@ -195,10 +188,10 @@ export const FinesView: React.FC = () => {
               type="button"
               disabled={isPaying}
               onClick={() => handlePay(f.id)}
-              className="px-2.5 py-1 bg-[#92400e] hover:bg-[#78350f] text-white font-medium text-[11px] rounded transition disabled:opacity-50 cursor-pointer flex items-center gap-1 shadow-xs"
+              className="btn-primary py-1 px-3 text-xs rounded-lg"
             >
               {isPaying && <RotateCw className="w-3 h-3 animate-spin" />}
-              <span>{isStaff ? 'Lập Biên Lai Thu' : 'Thanh Toán'}</span>
+              <span>{isStaff ? 'Thu phí' : 'Thanh toán'}</span>
             </button>
 
             {isAdmin && (
@@ -209,10 +202,9 @@ export const FinesView: React.FC = () => {
                   setWaiveReason('');
                   setWaiveError('');
                 }}
-                className="px-2 py-1 text-stone-600 hover:text-stone-900 hover:bg-[#f1ede4] border border-[#dcd6c8] rounded text-[11px] transition cursor-pointer"
-                title="Quyền miễn phạt dành cho Quản trị viên"
+                className="btn-secondary py-1 px-2.5 text-xs rounded-lg"
               >
-                Miễn Phạt
+                Miễn phạt
               </button>
             )}
           </div>
@@ -223,32 +215,30 @@ export const FinesView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header & Balance Card */}
-      <div className="aged-paper border border-[#ded5c2] rounded-lg p-6 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header */}
+      <div className="ui-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-white/10">
         <div>
-          <div className="flex items-center gap-2 text-[#92400e] text-xs font-semibold uppercase tracking-wider mb-1 font-serif">
+          <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-1">
             <Receipt className="w-4 h-4" />
-            <span>Sổ Thu Chi Thư Viện</span>
+            <span>Quản Lý Phí Phạt</span>
           </div>
-          <h1 className="text-2xl font-bold text-stone-900 font-serif-display tracking-tight">
-            Sổ Theo Dõi Tiền Phạt &amp; Bồi Thường
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Theo Dõi & Xử Lý Tiền Phạt
           </h1>
-          <p className="text-xs sm:text-sm text-stone-600 mt-1 font-serif-data">
+          <p className="text-sm text-slate-400 mt-1">
             {isStaff
-              ? 'Xử lý thu phí phạt trực tiếp tại quầy và ghi nhận các trường hợp miễn giảm của quản trị viên'
-              : 'Kiểm tra các khoản phí phạt phát sinh và thanh toán nghĩa vụ quá hạn'}
+              ? 'Ghi nhận thanh toán khoản phạt quá hạn, hư hỏng sách và xử lý miễn phạt.'
+              : 'Theo dõi và thanh toán các khoản phí phạt phát sinh.'}
           </p>
         </div>
 
-        <div className="flex items-center gap-4 self-start sm:self-auto">
-          <div className="px-5 py-3 aged-paper-card border border-[#ded5c2] rounded text-center shadow-2xs">
-            <span className="text-[10px] text-stone-500 block uppercase font-mono tracking-wider">
-              {statusFilter === 'UNPAID' ? 'Số Tiền Chưa Thu' : 'Tổng Tiền Đang Lọc'}
-            </span>
-            <span className="text-2xl font-bold text-[#92400e] font-serif">
-              {totalUnpaid.toLocaleString()} VND
-            </span>
-          </div>
+        <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-xl text-center shrink-0">
+          <span className="text-[10px] text-rose-400 font-semibold block uppercase font-mono tracking-wider">
+            {statusFilter === 'UNPAID' ? 'Cần Thanh Toán' : 'Tổng Đang Lọc'}
+          </span>
+          <span className="text-xl font-bold text-rose-400">
+            {totalUnpaid.toLocaleString()} VNĐ
+          </span>
         </div>
       </div>
 
@@ -257,9 +247,9 @@ export const FinesView: React.FC = () => {
         columns={columns}
         data={fines}
         loading={loading}
-        emptyTitle={statusFilter ? `Không có khoản phạt nào (${statusFilter})` : 'Không có dữ liệu tiền phạt'}
-        emptyDescription="Hiện không có bản ghi tiền phạt lưu hành nào phù hợp với bộ lọc đã chọn."
-        searchPlaceholder="Tìm kiếm khoản phạt theo tựa sách hoặc độc giả..."
+        emptyTitle={statusFilter ? `Không có phí phạt (${statusFilter})` : 'Không có phí phạt'}
+        emptyDescription="Hiện chưa có dữ liệu phí phạt nào phù hợp."
+        searchPlaceholder="Tìm theo tựa sách, độc giả..."
         searchFilter={(item, query) => {
           const q = query.toLowerCase();
           return Boolean(
@@ -269,7 +259,7 @@ export const FinesView: React.FC = () => {
           );
         }}
         actions={
-          <div className="flex items-center space-x-1 bg-[#fbf9f5] p-1 rounded border border-[#e6e0d4] text-xs font-serif-data">
+          <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-white/10 text-xs">
             {[
               { id: 'UNPAID', label: 'Chưa thu' },
               { id: 'PAID', label: 'Đã thu' },
@@ -280,10 +270,10 @@ export const FinesView: React.FC = () => {
                 key={item.id}
                 type="button"
                 onClick={() => setStatusFilter(item.id)}
-                className={`px-3 py-1 rounded text-[11px] font-medium transition cursor-pointer font-serif ${
+                className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
                   statusFilter === item.id
-                    ? 'bg-[#92400e] text-white font-semibold shadow-xs'
-                    : 'text-stone-600 hover:text-stone-900 hover:bg-[#f1ede4]'
+                    ? 'bg-indigo-600 text-white font-bold shadow-md'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {item.label}
@@ -295,63 +285,54 @@ export const FinesView: React.FC = () => {
 
       {/* Waive Fine Modal */}
       {waiveTargetId && (
-        <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <form
             onSubmit={handleWaiveSubmit}
             noValidate
-            className="bg-white border border-[#e6e0d4] rounded-lg max-w-sm w-full p-5 shadow-2xl space-y-4 font-serif-data"
+            className="bg-[#0d1322] border border-white/10 rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4 text-xs"
           >
-            <div className="flex items-center justify-between border-b border-[#e6e0d4] pb-2">
-              <h3 className="font-bold text-stone-900 text-sm font-serif-display">
-                Miễn Giảm Phí Phạt Lưu Hành
+            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+              <h3 className="font-bold text-white text-sm">
+                Miễn Giảm Phí Phạt
               </h3>
               <button
                 type="button"
                 onClick={() => setWaiveTargetId(null)}
-                className="text-stone-400 hover:text-stone-700 cursor-pointer"
+                className="text-slate-400 hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-stone-600">
-              Quyết định miễn phạt theo thẩm quyền Quản trị viên yêu cầu ghi rõ lý do chính thức để lưu hồ sơ kiểm toán.
-            </p>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block text-stone-700 font-medium mb-1">Lý Do Miễn Phạt Chính Thức *</label>
-                <textarea
-                  rows={3}
-                  value={waiveReason}
-                  onChange={(e) => {
-                    setWaiveReason(e.target.value);
-                    if (waiveError) setWaiveError('');
-                  }}
-                  placeholder="Ví dụ: Lỗi hệ thống vào ngày hạn trả, đã được Thủ thư trưởng xác nhận..."
-                  className={`w-full px-3 py-2 bg-[#fbf9f5] border rounded text-stone-900 focus:outline-none ${
-                    waiveError ? 'border-red-500' : 'border-[#dcd6c8] focus:border-[#92400e]'
-                  }`}
-                />
-                {waiveError && <p className="text-[11px] text-red-600 mt-1">{waiveError}</p>}
-              </div>
+            <div>
+              <label className="block font-medium text-slate-300 mb-1">Lý do miễn phạt *</label>
+              <textarea
+                rows={3}
+                value={waiveReason}
+                onChange={(e) => {
+                  setWaiveReason(e.target.value);
+                  if (waiveError) setWaiveError('');
+                }}
+                placeholder="Nhập lý do miễn giảm phí phạt..."
+                className="ui-input bg-slate-900 border-slate-700 text-white rounded-lg"
+              />
+              {waiveError && <p className="text-xs text-rose-400 mt-1">{waiveError}</p>}
             </div>
 
-            <div className="flex justify-end space-x-2 pt-3 border-t border-[#e6e0d4]">
+            <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
               <button
                 type="button"
                 onClick={() => setWaiveTargetId(null)}
-                className="px-3 py-1.5 bg-stone-100 text-stone-700 hover:bg-stone-200 rounded text-xs cursor-pointer font-serif"
+                className="btn-secondary rounded-lg"
               >
                 Hủy
               </button>
               <button
                 type="submit"
                 disabled={isWaiving}
-                className="px-3.5 py-1.5 bg-[#92400e] hover:bg-[#78350f] disabled:opacity-50 text-white font-medium rounded text-xs flex items-center space-x-1.5 cursor-pointer shadow-xs font-serif"
+                className="btn-primary rounded-lg"
               >
-                {isWaiving && <RotateCw className="w-3.5 h-3.5 animate-spin" />}
-                <span>Xác Nhận Miễn Phạt</span>
+                {isWaiving ? 'Đang miễn...' : 'Xác nhận miễn phạt'}
               </button>
             </div>
           </form>
@@ -360,3 +341,4 @@ export const FinesView: React.FC = () => {
     </div>
   );
 };
+

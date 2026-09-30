@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { api } from '../api/client.ts';
-import { NotificationItem, UserRole } from '../types/index.ts';
+import { NotificationItem } from '../types/index.ts';
 import {
   BookOpen,
-  Library,
   BookCopy,
   CalendarCheck,
   CreditCard,
@@ -14,16 +13,14 @@ import {
   LogOut,
   LogIn,
   Clock,
-  AlertTriangle,
-  CheckCircle2,
   Menu,
   X,
-  Compass,
-  Building2,
   Sparkles,
   ChevronDown,
   Shield,
+  Home,
   Layers,
+  CheckCheck,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -39,6 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAut
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [staffMenuOpen, setStaffMenuOpen] = useState(false);
   const staffMenuRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = async () => {
     if (user) {
@@ -46,7 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAut
         const notifs = await api.getNotifications();
         setNotifications(notifs);
       } catch {
-        // Ignore background polling errors
+        // Polling errors ignored
       }
     }
   };
@@ -57,11 +55,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAut
     return () => clearInterval(interval);
   }, [user]);
 
-  // Close staff menu on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (staffMenuRef.current && !staffMenuRef.current.contains(e.target as Node)) {
         setStaffMenuOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -88,174 +88,221 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAut
     }
   };
 
-  const isStaff = user?.role === 'ADMIN' || user?.role === 'LIBRARIAN';
-  const isAdmin = user?.role === 'ADMIN';
+  const isStaff = user?.role === 'SUPERADMIN' || user?.role === 'ADMIN' || user?.role === 'LIBRARIAN';
+  const isAdmin = user?.role === 'SUPERADMIN' || user?.role === 'ADMIN';
+  const isStaffTabActive = ['circulation', 'my-loans', 'reservations', 'fines', 'dashboard', 'users'].includes(activeTab);
 
-  const isStaffTabActive = ['circulation', 'reservations', 'fines', 'dashboard', 'users'].includes(activeTab);
+  const navTabClass = (tab: string) =>
+    `relative px-3.5 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+      activeTab === tab
+        ? 'text-white bg-[#6366f1]/20 border border-[#6366f1]/40 shadow-lg shadow-[#6366f1]/15'
+        : 'text-[#94a3b8] hover:text-white hover:bg-white/5'
+    }`;
 
   return (
-    <header className="bg-[#fcfbf7] border-b border-[#ded5c2] text-stone-900 sticky top-0 z-40 shadow-2xs font-serif-data">
-      {/* Upper Library Masthead Ribbon - Clean Operational Status & Persona Simulator */}
-      <div className="bg-[#f5efe4] px-4 py-1.5 text-[11px] text-stone-700 border-b border-[#ded5c2]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
-          {/* Library Hours & Operational Notice */}
-          <div className="flex items-center gap-2 text-stone-800 text-[11px]">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-700" />
-            <span className="font-semibold text-stone-900 font-serif">Hôm nay tại Thư viện Athenaeum:</span>
-            <span>Các phòng đọc mở cửa 8:00 – 21:00</span>
-            <span className="text-stone-400 hidden sm:inline" aria-hidden="true">·</span>
-            <span className="hidden sm:inline text-stone-600">124 Đường Athenaeum · Kho Nghiên cứu Tầng 1–4</span>
+    <header className="sticky top-0 z-50 bg-[#0f172a]/90 backdrop-blur-xl border-b border-white/10 shadow-xl">
+      {/* Demo Switcher Sub-bar */}
+      <div className="bg-[#0b0f19]/80 border-b border-white/5 px-4 py-1.5">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+            <span className="text-xs text-white font-semibold">LibraryOS Pro</span>
+            <span className="text-white/20 text-xs">·</span>
+            <span className="text-xs text-[#94a3b8] font-mono">PostgreSQL Database Connected</span>
           </div>
 
-          {/* Perspective Switcher / Demo Role Simulator */}
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto justify-end">
-            <span className="text-[10px] text-stone-600 font-sans font-medium uppercase tracking-wider mr-1 shrink-0">
-              Chế độ xem:
-            </span>
-            <div className="inline-flex rounded-md p-0.5 bg-[#eae2d3] border border-[#d6ccb8] text-[11px]">
-              <button
-                type="button"
-                onClick={() => switchAccount('MEMBER')}
-                className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer whitespace-nowrap ${
-                  user?.role === 'MEMBER'
-                    ? 'bg-white text-stone-900 font-semibold shadow-2xs'
-                    : 'text-stone-700 hover:text-stone-900'
-                }`}
-                title="Duyệt với tư cách bạn đọc công cộng có thẻ thư viện"
-              >
-                Bạn đọc
-              </button>
-              <button
-                type="button"
-                onClick={() => switchAccount('LIBRARIAN')}
-                className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer whitespace-nowrap ${
-                  user?.role === 'LIBRARIAN'
-                    ? 'bg-white text-stone-900 font-semibold shadow-2xs'
-                    : 'text-stone-700 hover:text-stone-900'
-                }`}
-                title="Truy cập bàn lưu thông & công cụ giám tuyển thủ thư"
-              >
-                Thủ thư
-              </button>
-              <button
-                type="button"
-                onClick={() => switchAccount('ADMIN')}
-                className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer whitespace-nowrap ${
-                  user?.role === 'ADMIN'
-                    ? 'bg-white text-stone-900 font-semibold shadow-2xs'
-                    : 'text-stone-700 hover:text-stone-900'
-                }`}
-                title="Toàn quyền quản trị viên thư viện"
-              >
-                Quản trị viên
-              </button>
-              <button
-                type="button"
-                onClick={() => switchAccount('GUEST')}
-                className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer whitespace-nowrap ${
-                  !user
-                    ? 'bg-stone-900 text-white font-semibold shadow-2xs'
-                    : 'text-stone-700 hover:text-stone-900'
-                }`}
-                title="Duyệt với tư cách khách vãng lai"
-              >
-                Khách vãng lai
-              </button>
+          {/* Quick Account Switcher for Demo */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-[#94a3b8] font-medium mr-1 hidden sm:inline">Chuyển tài khoản demo:</span>
+            <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/10">
+              {([
+                { role: 'MEMBER', label: 'Bạn đọc' },
+                { role: 'LIBRARIAN', label: 'Thủ thư' },
+                { role: 'ADMIN', label: 'Admin' },
+                { role: 'SUPERADMIN', label: 'SuperAdmin' },
+                { role: 'GUEST', label: 'Khách' },
+              ] as const).map(({ role, label }) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => switchAccount(role)}
+                  className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                    (role === 'GUEST' && !user) || user?.role === role
+                      ? 'bg-gradient-to-r from-[#6366f1] to-[#3b82f6] text-white shadow-md'
+                      : role === 'SUPERADMIN'
+                      ? 'text-amber-400 hover:text-white hover:bg-amber-500/20'
+                      : 'text-[#94a3b8] hover:text-white'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Masthead: Brand Logo & User Actions */}
+      {/* Main Navbar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between py-3.5 sm:py-4">
-          {/* Zone 1: Brand Title & Logo */}
-          <div
-            className="flex items-center space-x-3.5 cursor-pointer select-none group"
+        <div className="flex items-center justify-between h-16 gap-6">
+          {/* Logo */}
+          <button
+            type="button"
             onClick={() => setActiveTab('home')}
+            className="flex items-center gap-3 shrink-0 cursor-pointer group"
           >
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg bg-[#92400e] text-white flex items-center justify-center shadow-xs group-hover:bg-[#78350f] transition-all ring-1 ring-[#b45309]/30">
-              <Library className="w-5 h-5 sm:w-6 sm:h-6 text-[#fdfbf7]" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6366f1] to-[#3b82f6] flex items-center justify-center text-white shadow-lg shadow-[#6366f1]/30 transition-transform group-hover:scale-105">
+              <BookOpen className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-serif-display font-bold text-xl sm:text-2xl tracking-tight text-stone-900 block leading-tight">
-                  Thư viện Athenaeum
-                </span>
+            <div className="text-left">
+              <div className="text-white font-extrabold text-lg tracking-tight leading-tight">
+                LibraryOS
               </div>
-              <p className="text-[11px] sm:text-xs text-stone-500 font-sans mt-0.5">
-                Cổng Tra Cứu &amp; Quản Lý Mượn Trả Trực Tuyến
-              </p>
+              <div className="text-[11px] text-[#818cf8] font-medium leading-tight">Hệ Thống Thư Viện Số</div>
             </div>
-          </div>
+          </button>
 
-          {/* Right Controls: Patron Card / Profile / Bell / Mobile Toggle */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-1.5 flex-1">
+            <button type="button" onClick={() => setActiveTab('home')} className={navTabClass('home')}>
+              <Home className="w-4 h-4 text-[#818cf8]" />
+              <span>Trang chủ</span>
+            </button>
+            <button type="button" onClick={() => setActiveTab('catalog')} className={navTabClass('catalog')}>
+              <BookOpen className="w-4 h-4 text-[#38bdf8]" />
+              <span>Tra cứu sách</span>
+            </button>
+            <button type="button" onClick={() => setActiveTab('collections')} className={navTabClass('collections')}>
+              <Sparkles className="w-4 h-4 text-[#f59e0b]" />
+              <span>Bộ sưu tập</span>
+            </button>
+            <button type="button" onClick={() => setActiveTab('services')} className={navTabClass('services')}>
+              <Layers className="w-4 h-4 text-[#a78bfa]" />
+              <span>Dịch vụ</span>
+            </button>
+            {user && !isStaff && (
+              <button type="button" onClick={() => setActiveTab('my-loans')} className={navTabClass('my-loans')}>
+                <Clock className="w-4 h-4 text-[#34d399]" />
+                <span>Phiếu mượn của tôi</span>
+              </button>
+            )}
+
+            {/* Staff Dropdown */}
+            {isStaff && (
+              <div className="relative" ref={staffMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setStaffMenuOpen(!staffMenuOpen)}
+                  className={`px-3.5 py-2 text-sm font-semibold rounded-lg flex items-center gap-2 transition-all cursor-pointer ${
+                    isStaffTabActive
+                      ? 'text-white bg-[#6366f1]/20 border border-[#6366f1]/40 shadow-lg shadow-[#6366f1]/15'
+                      : 'text-[#94a3b8] hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Shield className="w-4 h-4 text-[#818cf8]" />
+                  <span>Quản Lý Nghiệp Vụ</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${staffMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {staffMenuOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-64 bg-[#0f172a] border border-[#6366f1]/30 rounded-xl shadow-2xl py-2 z-50 backdrop-blur-xl">
+                    <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#818cf8] border-b border-white/10 mb-1">
+                      Bàn Nghiệp Vụ Thủ Thư
+                    </div>
+                    {[
+                      { tab: 'circulation', icon: BookCopy, label: 'Mượn & Trả Sách (Lưu thông)' },
+                      { tab: 'my-loans', icon: Clock, label: 'Phiếu Mượn Cá Nhân' },
+                      { tab: 'reservations', icon: CalendarCheck, label: 'Quản Lý Đặt Chỗ' },
+                      { tab: 'fines', icon: CreditCard, label: 'Xử Lý Tiền Phạt' },
+                      { tab: 'dashboard', icon: BarChart3, label: 'Báo Cáo & Thống Kê' },
+                    ].map(({ tab, icon: Icon, label }) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => { setActiveTab(tab); setStaffMenuOpen(false); }}
+                        className={`w-full px-3 py-2.5 text-left text-sm flex items-center gap-3 transition-colors cursor-pointer ${
+                          activeTab === tab ? 'text-[#818cf8] bg-[#6366f1]/15 font-semibold' : 'text-[#cbd5e1] hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 text-[#818cf8]" />
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => { setActiveTab('users'); setStaffMenuOpen(false); }}
+                        className={`w-full px-3 py-2.5 text-left text-sm flex items-center gap-3 transition-colors cursor-pointer border-t border-white/10 mt-1 pt-2 ${
+                          activeTab === 'users' ? 'text-[#818cf8] bg-[#6366f1]/15 font-semibold' : 'text-[#cbd5e1] hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <Users className="w-4 h-4 text-[#f59e0b]" />
+                        <span>Quản Lý Người Dùng</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </nav>
+
+          {/* Right User Bar */}
+          <div className="flex items-center gap-3 shrink-0">
             {/* Notification Bell */}
             {user && (
-              <div className="relative">
+              <div className="relative" ref={notifRef}>
                 <button
                   type="button"
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="p-2 rounded-full text-stone-600 hover:text-stone-900 hover:bg-[#f4f0e6] relative transition cursor-pointer border border-transparent hover:border-[#e6e0d4]"
-                  aria-label="Xem thông báo"
+                  className="relative p-2 rounded-lg text-[#94a3b8] hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                  aria-label="Thông báo"
                 >
-                  <Bell className="w-4 h-4" />
+                  <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-[#92400e] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                      {unreadCount}
+                    <span className="absolute top-1 right-1 w-4 h-4 bg-gradient-to-r from-[#ef4444] to-[#f43f5e] text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
+                      {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </button>
 
-                {/* Notifications Dropdown */}
                 {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-[#e6e0d4] rounded-lg shadow-xl py-2 z-50">
-                    <div className="px-4 py-2.5 border-b border-[#e6e0d4] flex items-center justify-between bg-[#fbf9f5]">
-                      <span className="text-xs font-semibold text-stone-900 font-serif-display uppercase tracking-wider">
-                        Thông báo Thư viện
-                      </span>
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-[#0f172a] border border-[#6366f1]/30 rounded-xl shadow-2xl py-0 z-50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#0b0f19]">
+                      <span className="text-sm font-bold text-white">Thông báo mới</span>
                       {unreadCount > 0 && (
                         <button
                           type="button"
                           onClick={handleMarkAllRead}
-                          className="text-[11px] text-[#92400e] hover:underline font-medium cursor-pointer"
+                          className="flex items-center gap-1 text-xs text-[#818cf8] hover:underline cursor-pointer"
                         >
-                          Đánh dấu đã đọc tất cả
+                          <CheckCheck className="w-3.5 h-3.5" />
+                          <span>Đọc tất cả</span>
                         </button>
                       )}
                     </div>
-
-                    <div className="max-h-80 overflow-y-auto divide-y divide-[#f1ede4]">
+                    <div className="max-h-72 overflow-y-auto divide-y divide-white/5">
                       {notifications.length === 0 ? (
-                        <div className="p-6 text-center text-xs text-stone-500 font-serif-display">
-                          Hiện không có thông báo lưu thông nào.
+                        <div className="py-8 text-center text-sm text-[#94a3b8]">
+                          Không có thông báo mới
                         </div>
                       ) : (
                         notifications.map((n) => (
                           <div
                             key={n.id}
                             onClick={() => handleMarkAsRead(n.id)}
-                            className={`p-3 text-xs transition cursor-pointer ${
-                              n.isRead ? 'bg-white opacity-70' : 'bg-[#fbf9f5]'
-                            } hover:bg-[#f4f0e6]`}
+                            className={`px-4 py-3 cursor-pointer transition-colors text-sm ${
+                              n.isRead ? 'opacity-60 bg-[#0f172a]' : 'bg-[#6366f1]/10'
+                            } hover:bg-white/5`}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <span className="font-semibold text-stone-900 capitalize">
-                                {n.type.toLowerCase().replace('_', ' ')}
+                              <span className="font-semibold text-white text-xs uppercase tracking-wide">
+                                {n.type.toLowerCase().replace(/_/g, ' ')}
                               </span>
-                              {!n.isRead && (
-                                <span className="w-2 h-2 rounded-full bg-[#92400e] shrink-0 mt-1" />
-                              )}
+                              {!n.isRead && <span className="w-2 h-2 rounded-full bg-[#6366f1] shrink-0 mt-1" />}
                             </div>
-                            <p className="text-stone-600 mt-1 text-[11px] leading-relaxed">
-                              {n.message}
-                            </p>
-                            <span className="text-[10px] text-stone-400 mt-1.5 block font-mono">
-                              {new Date(n.createdAt).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                            <p className="text-[#cbd5e1] text-xs mt-1 leading-relaxed">{n.message}</p>
+                            <span className="text-[#64748b] text-[11px] font-mono mt-1 block">
+                              {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
                         ))
@@ -266,46 +313,39 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAut
               </div>
             )}
 
-            {/* User Profile or Sign-in Action */}
+            {/* User Info / Login Button */}
             {user ? (
-              <div className="flex items-center space-x-2">
-                <div
-                  onClick={() => setActiveTab('my-loans')}
-                  className="hidden sm:flex flex-col text-right cursor-pointer group"
-                >
-                  <span className="text-xs font-semibold text-stone-900 group-hover:text-[#92400e] transition">
-                    {user.fullName}
-                  </span>
-                  <span className="text-[10px] font-mono text-stone-500 uppercase">
-                    {user.role === 'ADMIN' ? 'QUẢN TRỊ' : user.role === 'LIBRARIAN' ? 'THỦ THƯ' : 'BẠN ĐỌC'} · #{user.id.toString().padStart(4, '0')}
-                  </span>
+              <div className="flex items-center gap-3 pl-3 border-l border-white/10">
+                <div className="text-right hidden sm:block">
+                  <div className="text-sm font-bold text-white leading-tight">
+                    {user.fullName.replace(/\s*\(.*?\)/g, '')}
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={logout}
-                  className="p-2 rounded text-stone-500 hover:text-stone-900 hover:bg-[#f4f0e6] transition cursor-pointer"
-                  title="Đăng xuất khỏi tài khoản"
+                  className="p-2 rounded-lg text-[#94a3b8] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors cursor-pointer"
+                  title="Đăng xuất"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-4.5 h-4.5" />
                 </button>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={openAuthModal}
-                className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-[#92400e] hover:bg-[#78350f] text-white text-xs font-medium rounded shadow-xs transition flex items-center space-x-1.5 cursor-pointer"
+                className="btn-primary"
               >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Đăng ký Thẻ / Đăng nhập</span>
+                <LogIn className="w-4 h-4" />
+                <span>Đăng nhập</span>
               </button>
             )}
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Toggle */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-stone-600 hover:text-stone-900 rounded cursor-pointer"
-              aria-label="Mở menu điều hướng"
+              className="lg:hidden p-2 rounded-lg text-[#94a3b8] hover:text-white hover:bg-white/5"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -313,325 +353,52 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, openAut
         </div>
       </div>
 
-      {/* Primary Navigation Menu UNDER THE LOGO */}
-      <nav
-        aria-label="Menu điều hướng chính"
-        className="border-t border-[#ded5c2] bg-[#f8f4eb] shadow-2xs font-sans"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between overflow-x-auto lg:overflow-visible no-scrollbar py-1 gap-2">
-            {/* Primary Tab Navigation links directly beneath logo */}
-            <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
-              {/* 1. Trang Chủ */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('home')}
-                className={`px-3 py-2 text-xs transition-colors cursor-pointer relative whitespace-nowrap rounded font-medium flex items-center gap-1.5 ${
-                  activeTab === 'home'
-                    ? 'bg-[#ede5d4] text-[#92400e] font-bold shadow-2xs ring-1 ring-[#d5ccba]'
-                    : 'text-stone-700 hover:text-stone-900 hover:bg-[#eee8dc]'
-                }`}
-              >
-                <Library className="w-3.5 h-3.5" />
-                <span>Trang Chủ</span>
-                {activeTab === 'home' && (
-                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#92400e] rounded-full" />
-                )}
-              </button>
-
-              {/* 2. Tra cứu Mục lục (Catalog) */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('catalog')}
-                className={`px-3 py-2 text-xs flex items-center gap-1.5 transition-colors cursor-pointer relative whitespace-nowrap rounded font-medium ${
-                  activeTab === 'catalog'
-                    ? 'bg-[#ede5d4] text-[#92400e] font-bold shadow-2xs ring-1 ring-[#d5ccba]'
-                    : 'text-stone-700 hover:text-stone-900 hover:bg-[#eee8dc]'
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Tra cứu Mục lục</span>
-                {activeTab === 'catalog' && (
-                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#92400e] rounded-full" />
-                )}
-              </button>
-
-              {/* 4. Bộ sưu tập Tuyển chọn */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('collections')}
-                className={`px-3 py-2 text-xs flex items-center gap-1.5 transition-colors cursor-pointer relative whitespace-nowrap rounded font-medium ${
-                  activeTab === 'collections'
-                    ? 'bg-[#ede5d4] text-[#92400e] font-bold shadow-2xs ring-1 ring-[#d5ccba]'
-                    : 'text-stone-700 hover:text-stone-900 hover:bg-[#eee8dc]'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Bộ sưu tập Tuyển chọn</span>
-                {activeTab === 'collections' && (
-                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#92400e] rounded-full" />
-                )}
-              </button>
-
-              {/* 5. Hướng dẫn & Dịch vụ */}
-              <button
-                type="button"
-                onClick={() => setActiveTab('services')}
-                className={`px-3 py-2 text-xs flex items-center gap-1.5 transition-colors cursor-pointer relative whitespace-nowrap rounded font-medium ${
-                  activeTab === 'services'
-                    ? 'bg-[#ede5d4] text-[#92400e] font-bold shadow-2xs ring-1 ring-[#d5ccba]'
-                    : 'text-stone-700 hover:text-stone-900 hover:bg-[#eee8dc]'
-                }`}
-              >
-                <Building2 className="w-3.5 h-3.5" />
-                <span>Hướng dẫn &amp; Dịch vụ</span>
-                {activeTab === 'services' && (
-                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#92400e] rounded-full" />
-                )}
-              </button>
-
-              {/* 6. Sổ Mượn Bạn đọc (Patron Card Link) */}
-              {user && (
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('my-loans')}
-                  className={`px-3 py-2 text-xs flex items-center gap-1.5 transition-colors cursor-pointer relative whitespace-nowrap rounded font-medium ${
-                    activeTab === 'my-loans'
-                      ? 'bg-[#ede5d4] text-[#92400e] font-bold shadow-2xs ring-1 ring-[#d5ccba]'
-                      : 'text-stone-700 hover:text-stone-900 hover:bg-[#eee8dc]'
-                  }`}
-                >
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>Sổ Mượn Bạn đọc</span>
-                  {activeTab === 'my-loans' && (
-                    <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#92400e] rounded-full" />
-                  )}
-                </button>
-              )}
-            </div>
-
-            {/* Right utility items in the sub-menu bar: Staff Portal & API */}
-            <div className="flex items-center space-x-2 shrink-0">
-              {/* Staff Desk Dropdown for Librarians/Admins */}
-              {isStaff && (
-                <div className="relative" ref={staffMenuRef}>
-                  <button
-                    type="button"
-                    onClick={() => setStaffMenuOpen(!staffMenuOpen)}
-                    className={`px-3 py-1.5 text-xs font-serif font-semibold rounded border flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
-                      isStaffTabActive
-                        ? 'bg-[#f4eee2] text-[#92400e] border-[#92400e]'
-                        : 'bg-[#fcfbf7] text-stone-800 border-[#d5ccba] hover:bg-[#f2ece0]'
-                    }`}
-                  >
-                    <Shield className="w-3.5 h-3.5 text-[#92400e]" />
-                    <span>Cổng Nhân viên</span>
-                    <ChevronDown className="w-3 h-3 text-stone-500" />
-                  </button>
-
-                  {staffMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-64 aged-paper border border-[#ded5c2] rounded-lg shadow-xl py-1.5 z-50 font-serif-data">
-                      <div className="px-3 py-1.5 border-b border-[#ded5c2] text-[10px] uppercase font-mono text-stone-500 font-semibold">
-                        Nghiệp vụ Lưu thông &amp; Quản trị
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab('circulation');
-                          setStaffMenuOpen(false);
-                        }}
-                        className="w-full px-3 py-2 text-left text-xs text-stone-800 hover:bg-[#f2ece0] hover:text-[#92400e] flex items-center gap-2 cursor-pointer font-serif"
-                      >
-                        <BookCopy className="w-4 h-4 text-stone-500" />
-                        <span>Bàn Lưu thông &amp; Cho mượn</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab('reservations');
-                          setStaffMenuOpen(false);
-                        }}
-                        className="w-full px-3 py-2 text-left text-xs text-stone-800 hover:bg-[#f2ece0] hover:text-[#92400e] flex items-center gap-2 cursor-pointer font-serif"
-                      >
-                        <CalendarCheck className="w-4 h-4 text-stone-500" />
-                        <span>Hàng đợi Giữ sách</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab('fines');
-                          setStaffMenuOpen(false);
-                        }}
-                        className="w-full px-3 py-2 text-left text-xs text-stone-800 hover:bg-[#f2ece0] hover:text-[#92400e] flex items-center gap-2 cursor-pointer font-serif"
-                      >
-                        <CreditCard className="w-4 h-4 text-stone-500" />
-                        <span>Sổ Quản lý Tiền phạt &amp; Phí</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveTab('dashboard');
-                          setStaffMenuOpen(false);
-                        }}
-                        className="w-full px-3 py-2 text-left text-xs text-stone-800 hover:bg-[#f2ece0] hover:text-[#92400e] flex items-center gap-2 cursor-pointer font-serif"
-                      >
-                        <BarChart3 className="w-4 h-4 text-stone-500" />
-                        <span>Thống kê &amp; Chỉ số Kho lưu</span>
-                      </button>
-                      {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab('users');
-                            setStaffMenuOpen(false);
-                          }}
-                          className="w-full px-3 py-2 text-left text-xs text-stone-800 hover:bg-[#f2ece0] hover:text-[#92400e] flex items-center gap-2 cursor-pointer border-t border-[#ded5c2] font-serif"
-                        >
-                          <Users className="w-4 h-4 text-stone-500" />
-                          <span>Danh bạ Độc giả &amp; Nhân sự</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Mobile Menu Drawer */}
+      {/* Mobile Menu Content */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-[#e6e0d4] px-4 pt-3 pb-6 space-y-2 text-xs">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('home');
-              setMobileMenuOpen(false);
-            }}
-            className={`w-full text-left px-3 py-2 rounded font-medium ${
-              activeTab === 'home' ? 'bg-[#f4f0e6] text-[#92400e] font-semibold' : 'text-stone-700'
-            }`}
-          >
-            Trang Chủ
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('catalog');
-              setMobileMenuOpen(false);
-            }}
-            className={`w-full text-left px-3 py-2 rounded font-medium ${
-              activeTab === 'catalog' ? 'bg-[#f4f0e6] text-[#92400e] font-semibold' : 'text-stone-700'
-            }`}
-          >
-            Tra cứu Mục lục Sách
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('collections');
-              setMobileMenuOpen(false);
-            }}
-            className={`w-full text-left px-3 py-2 rounded font-medium ${
-              activeTab === 'collections' ? 'bg-[#f4f0e6] text-[#92400e] font-semibold' : 'text-stone-700'
-            }`}
-          >
-            Bộ sưu tập Tuyển chọn
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('services');
-              setMobileMenuOpen(false);
-            }}
-            className={`w-full text-left px-3 py-2 rounded font-medium ${
-              activeTab === 'services' ? 'bg-[#f4f0e6] text-[#92400e] font-semibold' : 'text-stone-700'
-            }`}
-          >
-            Hướng dẫn &amp; Dịch vụ Độc giả
-          </button>
-
-          {user && (
+        <div className="lg:hidden bg-[#0f172a] border-t border-white/10 px-4 py-3 space-y-1">
+          {[
+            { tab: 'home', icon: Home, label: 'Trang chủ' },
+            { tab: 'catalog', icon: BookOpen, label: 'Tra cứu sách' },
+            { tab: 'collections', icon: Sparkles, label: 'Bộ sưu tập' },
+            { tab: 'services', icon: Layers, label: 'Dịch vụ' },
+            ...(user && !isStaff ? [{ tab: 'my-loans', icon: Clock, label: 'Phiếu mượn của tôi' }] : []),
+          ].map(({ tab, icon: Icon, label }) => (
             <button
+              key={tab}
               type="button"
-              onClick={() => {
-                setActiveTab('my-loans');
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full text-left px-3 py-2 rounded font-medium ${
-                activeTab === 'my-loans' ? 'bg-[#f4f0e6] text-[#92400e] font-semibold' : 'text-stone-700'
+              onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                activeTab === tab ? 'bg-[#6366f1]/20 text-[#818cf8]' : 'text-[#cbd5e1] hover:bg-white/5'
               }`}
             >
-              Thẻ Độc giả &amp; Sổ Mượn Sách
+              <Icon className="w-4 h-4" />
+              <span>{label}</span>
             </button>
-          )}
+          ))}
 
           {isStaff && (
-            <div className="pt-2 border-t border-[#f1ede4] space-y-1">
-              <span className="text-[10px] font-mono uppercase text-stone-400 px-3">Cổng Nhân viên</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('circulation');
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2 rounded font-medium ${
-                  activeTab === 'circulation' ? 'bg-[#f4f0e6] text-[#92400e] font-semibold' : 'text-stone-700'
-                }`}
-              >
-                Bàn Lưu thông &amp; Cho mượn
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('reservations');
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2 rounded font-medium ${
-                  activeTab === 'reservations' ? 'bg-[#f4f0e6] text-[#92400e] font-semibold' : 'text-stone-700'
-                }`}
-              >
-                Hàng đợi Giữ sách
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('fines');
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2 rounded font-medium ${
-                  activeTab === 'fines' ? 'bg-[#f4f0e6] text-[#92400e] font-semibold' : 'text-stone-700'
-                }`}
-              >
-                Quản lý Tiền phạt &amp; Phí
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab('dashboard');
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2 rounded font-medium ${
-                  activeTab === 'dashboard' ? 'bg-[#f4f0e6] text-[#92400e] font-semibold' : 'text-stone-700'
-                }`}
-              >
-                Báo cáo &amp; Thống kê Lưu hành
-              </button>
-              {isAdmin && (
+            <div className="pt-2 mt-2 border-t border-white/10">
+              <p className="px-3 text-[11px] font-bold text-[#818cf8] uppercase tracking-wider mb-1">Quản lý nghiệp vụ</p>
+              {[
+                { tab: 'circulation', icon: BookCopy, label: 'Mượn & Trả Sách (Lưu thông)' },
+                { tab: 'my-loans', icon: Clock, label: 'Phiếu Mượn Cá Nhân' },
+                { tab: 'reservations', icon: CalendarCheck, label: 'Quản Lý Đặt Chỗ' },
+                { tab: 'fines', icon: CreditCard, label: 'Xử Lý Tiền Phạt' },
+                { tab: 'dashboard', icon: BarChart3, label: 'Báo Cáo Thống Kê' },
+                ...(isAdmin ? [{ tab: 'users', icon: Users, label: 'Quản Lý Người Dùng' }] : []),
+              ].map(({ tab, icon: Icon, label }) => (
                 <button
+                  key={tab}
                   type="button"
-                  onClick={() => {
-                    setActiveTab('users');
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded font-medium ${
-                    activeTab === 'users' ? 'bg-[#f4f0e6] text-[#92400e] font-semibold' : 'text-stone-700'
+                  onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                    activeTab === tab ? 'bg-[#6366f1]/20 text-[#818cf8]' : 'text-[#cbd5e1] hover:bg-white/5'
                   }`}
                 >
-                  Danh bạ Độc giả &amp; Phân quyền
+                  <Icon className="w-4 h-4" />
+                  <span>{label}</span>
                 </button>
-              )}
+              ))}
             </div>
           )}
         </div>

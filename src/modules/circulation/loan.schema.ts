@@ -1,9 +1,14 @@
 import { z } from 'zod';
 
-export const checkoutSchema = z.object({
-  memberId: z.number().int().positive('memberId must be a positive integer'),
-  bookCopyId: z.number().int().positive('bookCopyId must be a positive integer'),
-});
+export const checkoutSchema = z
+  .object({
+    memberId: z.number().int().positive('memberId must be a positive integer'),
+    bookCopyId: z.number().int().positive().optional(),
+    copyCode: z.string().min(1).optional(),
+  })
+  .refine((data) => data.bookCopyId !== undefined || (data.copyCode && data.copyCode.trim().length > 0), {
+    message: 'Either bookCopyId or copyCode must be provided',
+  });
 
 export const renewSchema = z.object({}).optional();
 
@@ -11,7 +16,7 @@ export const loanQuerySchema = z.object({
   page: z.string().optional(),
   size: z.string().optional(),
   sort: z.string().optional(),
-  status: z.enum(['ONGOING', 'RETURNED', 'OVERDUE', 'LOST']).optional(),
+  status: z.string().optional(),
   memberId: z.string().optional(),
 });
 

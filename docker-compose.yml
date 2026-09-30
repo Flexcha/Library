@@ -1,23 +1,23 @@
 version: '3.8'
 
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: library_mysql
+  postgres:
+    image: postgres:16-alpine
+    container_name: library_postgres
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: library_db
-      MYSQL_USER: library_app
-      MYSQL_PASSWORD: changeme
+      POSTGRES_DB: library_db
+      POSTGRES_USER: library_app
+      POSTGRES_PASSWORD: changeme
     ports:
-      - "3307:3306"
+      - "5433:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      test: ["CMD-SHELL", "pg_isready -U library_app -d library_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
@@ -27,7 +27,7 @@ services:
     restart: always
     environment:
       PORT: 8080
-      DATABASE_URL: mysql://library_app:changeme@mysql:3306/library_db
+      DATABASE_URL: postgresql://library_app:changeme@postgres:5432/library_db
       JWT_SECRET: super-secret-jwt-key-for-development-only-change-in-prod-123456789
       JWT_ACCESS_EXPIRATION: 15m
       JWT_REFRESH_EXPIRATION: 7d
@@ -40,8 +40,9 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
 
 volumes:
-  mysql_data:
+  postgres_data:
+

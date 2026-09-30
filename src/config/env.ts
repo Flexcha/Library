@@ -5,7 +5,7 @@ dotenv.config();
 
 const envSchema = z.object({
   PORT: z.string().default('3000').transform((val) => parseInt(val, 10)),
-  DATABASE_URL: z.string().default('file:./dev.db'),
+  DATABASE_URL: z.string().default('postgresql://admin@localhost:5432/library_db'),
   JWT_SECRET: z.string().default('super-secret-jwt-key-for-development-only-change-in-prod-123456789'),
   JWT_ACCESS_EXPIRATION: z.string().default('15m'),
   JWT_REFRESH_EXPIRATION: z.string().default('7d'),

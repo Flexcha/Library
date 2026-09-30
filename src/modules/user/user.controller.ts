@@ -9,11 +9,18 @@ export class UserController {
     return ApiResponse.success(res, result);
   }
 
+  static async create(req: Request, res: Response) {
+    const callerRole = req.user!.role;
+    const user = await UserService.createUser(req.body, callerRole);
+    return ApiResponse.created(res, user, 'User created successfully');
+  }
+
   static async getById(req: Request, res: Response) {
     const id = parseInt(req.params.id, 10);
     const currentUser = req.user!;
+    const isStaff = currentUser.role === 'SUPERADMIN' || currentUser.role === 'ADMIN' || currentUser.role === 'LIBRARIAN';
 
-    if (currentUser.role !== 'ADMIN' && currentUser.id !== id) {
+    if (!isStaff && currentUser.id !== id) {
       throw new ForbiddenError('You can only view your own profile');
     }
 
@@ -24,7 +31,7 @@ export class UserController {
   static async update(req: Request, res: Response) {
     const id = parseInt(req.params.id, 10);
     const currentUser = req.user!;
-    const isAdmin = currentUser.role === 'ADMIN';
+    const isAdmin = currentUser.role === 'SUPERADMIN' || currentUser.role === 'ADMIN';
 
     if (!isAdmin && currentUser.id !== id) {
       throw new ForbiddenError('You can only update your own profile');
@@ -36,8 +43,19 @@ export class UserController {
 
   static async updateStatus(req: Request, res: Response) {
     const id = parseInt(req.params.id, 10);
-    const updated = await UserService.updateStatus(id, req.body.status);
+    const callerRole = req.user!.role;
+    const updated = await UserService.updateStatus(id, req.body.status, callerRole);
     return ApiResponse.success(res, updated, 'User status updated successfully');
+  }
+
+  static async updateRole(req: Request, res: Response) {
+    const id = parseInt(req.params.id, 10);
+    const currentUser = req.user!;
+    if (currentUser.id === id) {
+      throw new ForbiddenError('Bạn không thể tự thay đổi quyền của chính mình');
+    }
+    const updated = await UserService.updateRole(id, req.body.role, currentUser.role);
+    return ApiResponse.success(res, updated, 'Role updated successfully');
   }
 
   static async remove(req: Request, res: Response) {

@@ -4,7 +4,7 @@ import { Loan } from '../types/index.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { useToast } from '../context/ToastContext.tsx';
 import { EmptyState } from './common/EmptyState.tsx';
-import { Clock, CheckCircle2, RotateCw, BookOpen, CreditCard, ShieldCheck, Library } from 'lucide-react';
+import { Clock, CheckCircle2, RotateCw, BookOpen, ShieldCheck } from 'lucide-react';
 
 const MAX_RENEWALS = 2;
 
@@ -22,7 +22,7 @@ export const MyLoans: React.FC = () => {
       const res = await api.getLoans({ size: 100 });
       setLoans(res.content || []);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to retrieve loans.');
+      toast.error(err.message || 'Không thể tải danh sách phiếu mượn.');
     } finally {
       setLoading(false);
     }
@@ -36,7 +36,7 @@ export const MyLoans: React.FC = () => {
     const targetLoan = loans.find((l) => l.id === loanId);
     if (targetLoan && targetLoan.renewalCount >= MAX_RENEWALS) {
       toast.warning(
-        `Đã đạt giới hạn gia hạn (tối đa ${MAX_RENEWALS} lần). Tác phẩm này không thể gia hạn thêm.`,
+        `Đã đạt giới hạn gia hạn (tối đa ${MAX_RENEWALS} lần).`,
         'Đã Đạt Giới Hạn'
       );
       return;
@@ -47,8 +47,8 @@ export const MyLoans: React.FC = () => {
       await api.renewLoan(loanId);
       toast.success(
         targetLoan
-          ? `Tác phẩm "${targetLoan.bookCopy.book.title}" đã được gia hạn thêm 14 ngày!`
-          : 'Đã gia hạn mượn sách thành công! Hạn trả lùi thêm 14 ngày.',
+          ? `Sách "${targetLoan.bookCopy.book.title}" đã được gia hạn thêm 14 ngày!`
+          : 'Đã gia hạn mượn sách thành công!',
         'Gia Hạn Thành Công'
       );
       await fetchLoans();
@@ -71,66 +71,60 @@ export const MyLoans: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Authentic Virtual Library Patron Card */}
+      {/* Reader Card Banner */}
       {user && user.role === 'MEMBER' && (
-        <div className="aged-paper-warm border border-[#d6ccb8] rounded-xl p-6 shadow-xs relative overflow-hidden library-card-emboss">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-[#92400e] text-xs font-semibold uppercase tracking-wider font-serif">
-                <Library className="w-4 h-4" />
-                <span>Thư Viện Nghiên Cứu &amp; Lưu Hành Athenaeum</span>
-              </div>
-              <h2 className="text-2xl font-bold font-serif-display text-stone-900 tracking-tight">
-                Thẻ Độc Giả Chính Thức &amp; Sổ Mượn Sách
-              </h2>
-              <div className="flex flex-wrap items-center gap-4 text-xs text-stone-700 pt-1 font-serif-data">
-                <span>Chủ thẻ: <strong className="text-stone-900 font-bold font-serif text-sm">{user.fullName}</strong></span>
-                <span>·</span>
-                <span className="font-mono text-stone-800">Mã ĐG: #PAT-{String(user.id).padStart(5, '0')}</span>
-                <span>·</span>
-                <span className="flex items-center gap-1 text-emerald-800 font-medium">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Tài Khoản Tốt · Quyền Mượn Lưu Hành Đang Hoạt Động</span>
-                </span>
-              </div>
+        <div className="ui-card p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 border border-white/10">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+              <Clock className="w-4 h-4" />
+              <span>Thẻ Bạn Đọc Thư Viện</span>
             </div>
-
-            {/* Decorative Barcode & Ledger Balance */}
-            <div className="flex flex-col items-start md:items-end justify-between bg-[#fbf9f4] border border-[#d6ccb8] p-4 rounded-lg self-start md:self-auto shrink-0 min-w-[200px] shadow-2xs">
-              <span className="text-[10px] uppercase tracking-widest text-stone-500 font-mono">
-                MÃ VẠCH ĐỘC GIẢ
+            <h2 className="text-2xl font-bold text-white tracking-tight">
+              Quản Lý Phiếu Mượn Cá Nhân
+            </h2>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300 pt-1">
+              <span>Bạn đọc: <strong className="text-white font-semibold">{user.fullName}</strong></span>
+              <span>·</span>
+              <span className="font-mono text-indigo-300">Mã ĐG: #PAT-{String(user.id).padStart(5, '0')}</span>
+              <span>·</span>
+              <span className="badge badge-green">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Tài khoản hợp lệ</span>
               </span>
-              <div className="font-mono text-xl tracking-widest text-stone-800 my-1 select-none">
-                ||| | |||| | || ||||
-              </div>
-              <div className="text-[11px] text-stone-700 font-serif-data">
-                Sách đang mượn trên thẻ: <strong className="text-stone-900 font-bold font-serif text-sm">{activeLoans.length}</strong>
-              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-start md:items-end justify-between bg-slate-900/90 border border-white/10 p-4 rounded-xl shrink-0">
+            <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400">
+              SÁCH ĐANG MƯỢN
+            </span>
+            <div className="text-2xl font-bold text-indigo-400 my-0.5">
+              {activeLoans.length} <span className="text-xs font-normal text-slate-300">cuốn</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Staff View Header (for Admin & Librarian) */}
+      {/* Staff View Header */}
       {user && user.role !== 'MEMBER' && (
-        <div className="aged-paper border border-[#ded5c2] rounded-lg p-6 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="ui-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-white/10">
           <div>
-            <div className="flex items-center gap-2 text-[#92400e] text-xs font-semibold uppercase tracking-wider mb-1 font-serif">
+            <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-1">
               <Clock className="w-4 h-4" />
-              <span>Sổ Đăng Ký Lưu Hành Tại Quầy</span>
+              <span>Sổ Ghi Nhận Lưu Thông</span>
             </div>
-            <h1 className="text-2xl font-bold text-stone-900 font-serif-display tracking-tight">
-              Tất Cả Lượt Mượn Đang Hoạt Động &amp; Lịch Sử
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              Danh Sách Phiếu Mượn Đang Hoạt Động
             </h1>
-            <p className="text-xs sm:text-sm text-stone-600 mt-1 font-serif-data">
-              Nhật ký lưu hành toàn thư viện, theo dõi gia hạn và cảnh báo quá hạn
+            <p className="text-sm text-slate-400 mt-1">
+              Theo dõi hạn trả, số lần gia hạn và danh sách quá hạn toàn hệ thống.
             </p>
           </div>
-          <div className="px-4 py-2 bg-[#fcfbf7] border border-[#d5ccba] rounded text-center self-start sm:self-auto shadow-2xs">
-            <span className="text-[10px] text-stone-500 block uppercase font-mono tracking-wider">
-              Sách Đang Mượn
+          <div className="px-4 py-2 bg-indigo-500/15 border border-indigo-500/30 rounded-xl text-center">
+            <span className="text-[10px] text-indigo-300 block uppercase font-mono tracking-wider font-semibold">
+              Đang Lưu Hành
             </span>
-            <span className="text-xl font-bold text-[#92400e] font-serif-display">
+            <span className="text-xl font-bold text-indigo-400">
               {activeLoans.length} Cuốn
             </span>
           </div>
@@ -139,29 +133,29 @@ export const MyLoans: React.FC = () => {
 
       {/* Active Loans Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between border-b-2 border-[#b8ac95] pb-2">
-          <h2 className="text-base font-bold text-stone-900 font-serif-display flex items-center space-x-2">
-            <Clock className="w-4 h-4 text-[#92400e]" />
+        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <h2 className="text-base font-bold text-white flex items-center gap-2">
+            <Clock className="w-4 h-4 text-indigo-400" />
             <span>Sách Đang Mượn ({activeLoans.length})</span>
           </h2>
-          <span className="text-xs text-stone-600 font-serif-data">
-            Thời hạn mượn tiêu chuẩn: 14 Ngày · Tối đa 2 lần gia hạn
+          <span className="text-xs text-slate-400">
+            Thời hạn mượn: 14 ngày · Gia hạn tối đa 2 lần
           </span>
         </div>
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-5 rounded-lg border border-[#e6e0d4] bg-white h-44 animate-shimmer" />
-            <div className="p-5 rounded-lg border border-[#e6e0d4] bg-white h-44 animate-shimmer" />
+            <div className="h-40 bg-slate-800/50 border border-slate-700/40 rounded-xl animate-pulse" />
+            <div className="h-40 bg-slate-800/50 border border-slate-700/40 rounded-xl animate-pulse" />
           </div>
         ) : activeLoans.length === 0 ? (
           <EmptyState
             icon={BookOpen}
-            title="Không Có Lượt Mượn Nào Đang Hoạt Động"
-            description="Hiện bạn chưa mượn cuốn sách nào. Hãy khám phá các tác phẩm có sẵn để mượn ngay trong danh mục thẻ thư viện."
+            title="Hiện không có sách nào đang mượn"
+            description="Bạn hiện không có phiếu mượn nào đang hoạt động."
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {activeLoans.map((loan) => {
               const daysLeft = getDaysRemaining(loan.dueDate);
               const isOverdue = daysLeft < 0 || loan.status === 'OVERDUE';
@@ -173,85 +167,50 @@ export const MyLoans: React.FC = () => {
               return (
                 <div
                   key={loan.id}
-                  className={`p-5 rounded-lg border shadow-2xs flex flex-col justify-between space-y-4 transition ${
-                    isOverdue
-                      ? 'bg-[#fef2f2] border-red-300'
-                      : daysLeft <= 2
-                      ? 'bg-[#fffbeb] border-amber-300'
-                      : 'aged-paper-card border-[#ded5c2]'
-                  }`}
+                  className="ui-card p-5 space-y-4 flex flex-col justify-between border border-white/10"
                 >
                   <div className="space-y-2">
-                    <div className="flex items-start justify-between gap-2 border-b border-[#e7dfcf] pb-2">
-                      <h3 className="font-bold text-stone-900 text-base font-serif-display leading-snug">
+                    <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2">
+                      <h3 className="font-semibold text-white text-base leading-snug">
                         {loan.bookCopy.book.title}
                       </h3>
-                      <span
-                        className={`text-[11px] font-mono shrink-0 font-medium px-2 py-0.5 rounded border ${
-                          isOverdue
-                            ? 'text-red-700 bg-red-50 border-red-200 font-bold'
-                            : daysLeft <= 2
-                            ? 'text-amber-800 bg-amber-50 border-amber-200 font-bold'
-                            : 'text-stone-700 bg-[#f4eee2] border-[#ded5c2]'
-                        }`}
-                      >
-                        {isOverdue
-                          ? `QUÁ HẠN (${Math.abs(daysLeft)} ngày)`
-                          : `Còn ${daysLeft} ngày`}
+                      <span className={`badge ${isOverdue ? 'badge-red' : daysLeft <= 2 ? 'badge-yellow' : 'badge-green'}`}>
+                        {isOverdue ? `Quá hạn ${Math.abs(daysLeft)} ngày` : `Còn ${daysLeft} ngày`}
                       </span>
                     </div>
 
-                    <div className="text-xs text-stone-700 space-y-1.5 font-serif-data">
+                    <div className="text-xs text-slate-300 space-y-1.5">
                       <p>
-                        Mã vạch bản sách:{' '}
-                        <span className="font-mono font-semibold text-stone-900 bg-[#f4eee2] px-1.5 py-0.5 rounded border border-[#ded5c2]">
-                          {loan.bookCopy.copyCode}
-                        </span>
-                      </p>
-                      <p className="flex items-center gap-1.5 text-stone-700">
-                        <span>Ngày mượn: <span className="font-semibold text-stone-800 font-serif">{loan.loanDate}</span></span>
-                        <span aria-hidden="true">·</span>
-                        <span>Hạn trả: <strong className="text-stone-900 font-bold font-serif text-sm">{loan.dueDate}</strong></span>
+                        Mã bản sao: <span className="font-mono text-indigo-300 font-medium bg-slate-900 px-1.5 py-0.5 rounded border border-white/10">{loan.bookCopy.copyCode}</span>
                       </p>
                       <p>
-                        Đã gia hạn: <strong className="text-stone-900 font-bold font-serif">{loan.renewalCount}</strong> / {MAX_RENEWALS}
-                        {loan.renewalCount >= MAX_RENEWALS && (
-                          <span className="text-[#92400e] font-semibold ml-1.5">(Hết lượt gia hạn)</span>
-                        )}
+                        Ngày mượn: <strong className="text-white">{loan.loanDate}</strong> · Hạn trả: <strong className="text-indigo-400">{loan.dueDate}</strong>
+                      </p>
+                      <p>
+                        Gia hạn: <strong className="text-white">{loan.renewalCount}</strong> / {MAX_RENEWALS} lần
                       </p>
                       {user?.role !== 'MEMBER' && (
-                        <p className="text-[11px] text-stone-600 pt-0.5 font-sans">
-                          Độc giả: {loan.member.fullName} ({loan.member.email})
+                        <p className="text-[11px] text-slate-400">
+                          Bạn đọc: {loan.member.fullName} ({loan.member.email})
                         </p>
                       )}
                     </div>
                   </div>
 
-                  {/* Actions & Renew Button */}
-                  <div className="pt-3 border-t-2 border-[#e7dfcf] flex items-center justify-between">
-                    <span className="text-[11px] text-stone-600 font-serif-data">
+                  <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+                    <span className="text-xs text-slate-400">
                       {isWithinRenewalLimits
                         ? `Còn ${MAX_RENEWALS - loan.renewalCount} lần gia hạn`
-                        : 'Đã hết lượt gia hạn (2/2)'}
+                        : 'Đã hết lượt gia hạn'}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleRenew(loan.id)}
                       disabled={!isWithinRenewalLimits || isRenewing}
-                      aria-label={`Gia hạn ${loan.bookCopy.book.title}`}
-                      className={`px-3.5 py-1.5 text-xs font-medium rounded transition shadow-2xs flex items-center space-x-1.5 font-serif-data ${
-                        isWithinRenewalLimits && !isRenewing
-                          ? 'bg-[#92400e] hover:bg-[#78350f] text-white cursor-pointer'
-                          : 'bg-stone-200 text-stone-500 border border-[#d5ccba] cursor-not-allowed opacity-60'
-                      }`}
-                      title={
-                        !isWithinRenewalLimits
-                          ? `Đã hết lượt gia hạn (${loan.renewalCount}/${MAX_RENEWALS})`
-                          : 'Gia hạn mượn sách (+14 ngày)'
-                      }
+                      className="btn-primary py-1.5 px-3 text-xs disabled:opacity-50 rounded-lg"
                     >
                       <RotateCw className={`w-3.5 h-3.5 ${isRenewing ? 'animate-spin' : ''}`} />
-                      <span>{isRenewing ? 'Đang xử lý...' : 'Gia Hạn Sách'}</span>
+                      <span>{isRenewing ? 'Đang gia hạn...' : 'Gia hạn sách'}</span>
                     </button>
                   </div>
                 </div>
@@ -261,58 +220,49 @@ export const MyLoans: React.FC = () => {
         )}
       </div>
 
-      {/* Loan History Section with Classic Library Ledger Table */}
+      {/* Loan History */}
       {pastLoans.length > 0 && (
-        <div className="space-y-4 pt-6">
-          <div className="flex items-center justify-between border-b-2 border-[#b8ac95] pb-2">
-            <h2 className="text-base font-bold text-stone-900 font-serif-display flex items-center space-x-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-800" />
-              <span>Lịch Sử Mượn &amp; Kho Lưu Trữ Trả Sách ({pastLoans.length})</span>
+        <div className="space-y-4 pt-4">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>Lịch Sử Trả Sách ({pastLoans.length})</span>
             </h2>
-            <span className="text-xs text-stone-600 font-serif-data">Sổ Đăng Ký Lưu Hành Quá Khứ</span>
           </div>
 
-          <div className="aged-paper border border-[#ded5c2] rounded-lg overflow-hidden shadow-xs">
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
-                <thead className="ledger-header bg-[#f2ece0] text-stone-900 uppercase tracking-wider text-[11px] font-serif-display font-bold">
-                  <tr>
-                    <th className="px-4 py-3">Tựa Sách</th>
-                    <th className="px-4 py-3">Mã Vạch</th>
-                    <th className="px-4 py-3">Ngày Mượn</th>
-                    <th className="px-4 py-3">Ngày Trả</th>
-                    <th className="px-4 py-3">Trạng Thái</th>
+          <div className="ui-card overflow-hidden border border-white/10">
+            <table className="ui-table">
+              <thead>
+                <tr>
+                  <th>Tựa sách</th>
+                  <th>Mã bản sao</th>
+                  <th>Ngày mượn</th>
+                  <th>Ngày trả</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pastLoans.map((l) => (
+                  <tr key={l.id}>
+                    <td className="font-medium text-white">
+                      {l.bookCopy.book.title}
+                    </td>
+                    <td className="font-mono text-xs text-indigo-300">{l.bookCopy.copyCode}</td>
+                    <td className="text-slate-300">{l.loanDate}</td>
+                    <td className="text-slate-300">{l.returnDate || '—'}</td>
+                    <td>
+                      <span className={`badge ${l.status === 'RETURNED' ? 'badge-green' : 'badge-red'}`}>
+                        {l.status === 'RETURNED' ? 'ĐÃ TRẢ' : 'MẤT'}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-[#e7dfcf] text-stone-900 font-serif-data">
-                  {pastLoans.map((l) => (
-                    <tr key={l.id} className="ledger-row transition">
-                      <td className="px-4 py-3 font-semibold text-stone-900 font-serif text-sm">
-                        {l.bookCopy.book.title}
-                      </td>
-                      <td className="px-4 py-3 font-mono font-medium text-stone-700">{l.bookCopy.copyCode}</td>
-                      <td className="px-4 py-3 font-serif font-medium text-stone-800">{l.loanDate}</td>
-                      <td className="px-4 py-3 font-serif font-medium text-stone-800">{l.returnDate || '—'}</td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`font-semibold font-serif ${
-                            l.status === 'RETURNED' ? 'text-emerald-800' : 'text-red-700'
-                          }`}
-                        >
-                          {l.status === 'RETURNED' ? 'ĐÃ TRẢ' : l.status === 'LOST' ? 'MẤT' : l.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="ledger-summary-double px-4 py-2 bg-[#f6f0e2] text-[11px] text-stone-600 font-serif-data">
-              Tổng số lượt mượn trong lịch sử: <strong className="text-stone-900 font-bold font-serif">{pastLoans.length}</strong>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
     </div>
   );
 };
+

@@ -14,6 +14,18 @@ export class ApiError extends Error {
   }
 }
 
+let isRefreshingToken = false;
+let tokenRefreshSubscribers: Array<(token: string) => void> = [];
+
+function subscribeTokenRefresh(cb: (token: string) => void) {
+  tokenRefreshSubscribers.push(cb);
+}
+
+function onTokenRefreshed(token: string) {
+  tokenRefreshSubscribers.forEach((cb) => cb(token));
+  tokenRefreshSubscribers = [];
+}
+
 async function request<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('accessToken');
   const headers: Record<string, string> = {
@@ -25,10 +37,57 @@ async function request<T = any>(endpoint: string, options: RequestInit = {}): Pr
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
+  let res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers,
   });
+
+  // Handle 401 Automatic Token Refresh
+  if (res.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/refresh')) {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken) {
+      if (!isRefreshingToken) {
+        isRefreshingToken = true;
+        try {
+          const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (refreshRes.ok) {
+            const refreshBody = await refreshRes.json();
+            const newAccess = refreshBody.data.accessToken;
+            const newRefresh = refreshBody.data.refreshToken;
+            localStorage.setItem('accessToken', newAccess);
+            localStorage.setItem('refreshToken', newRefresh);
+            isRefreshingToken = false;
+            onTokenRefreshed(newAccess);
+          } else {
+            isRefreshingToken = false;
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+          }
+        } catch {
+          isRefreshingToken = false;
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+        }
+      }
+
+      const retryToken = await new Promise<string>((resolve) => {
+        subscribeTokenRefresh((newToken) => resolve(newToken));
+      });
+
+      if (retryToken) {
+        headers['Authorization'] = `Bearer ${retryToken}`;
+        res = await fetch(`${API_BASE}${endpoint}`, {
+          ...options,
+          headers,
+        });
+      }
+    }
+  }
 
   if (res.status === 204) {
     return null as any;
@@ -49,6 +108,19 @@ async function request<T = any>(endpoint: string, options: RequestInit = {}): Pr
   return body.data as T;
 }
 
+
+function cleanQuery(params?: Record<string, any>): string {
+  if (!params) return '';
+  const clean: Record<string, string> = {};
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') {
+      clean[k] = String(v);
+    }
+  });
+  const q = new URLSearchParams(clean).toString();
+  return q ? `?${q}` : '';
+}
+
 export const api = {
   // Auth
   register: (data: any) => request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
@@ -58,20 +130,16 @@ export const api = {
   me: () => request('/auth/me'),
 
   // Users
-  getUsers: (params?: Record<string, any>) => {
-    const query = new URLSearchParams(params as any).toString();
-    return request(`/users?${query}`);
-  },
+  getUsers: (params?: Record<string, any>) => request(`/users${cleanQuery(params)}`),
   getUser: (id: number) => request(`/users/${id}`),
+  createUser: (data: any) => request('/users', { method: 'POST', body: JSON.stringify(data) }),
   updateUser: (id: number, data: any) => request(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   updateUserStatus: (id: number, status: string) => request(`/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  updateUserRole: (id: number, role: string) => request(`/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
   deleteUser: (id: number) => request(`/users/${id}`, { method: 'DELETE' }),
 
   // Books & Catalog
-  getBooks: (params?: Record<string, any>) => {
-    const query = new URLSearchParams(params as any).toString();
-    return request(`/books?${query}`);
-  },
+  getBooks: (params?: Record<string, any>) => request(`/books${cleanQuery(params)}`),
   getBook: (id: number) => request(`/books/${id}`),
   createBook: (data: any) => request('/books', { method: 'POST', body: JSON.stringify(data) }),
   updateBook: (id: number, data: any) => request(`/books/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -93,27 +161,20 @@ export const api = {
   // Circulation
   checkout: (data: { memberId: number; bookCopyId: number }) => request('/loans', { method: 'POST', body: JSON.stringify(data) }),
   returnLoan: (loanId: number) => request(`/loans/${loanId}/return`, { method: 'PATCH' }),
+  updateLoanStatus: (loanId: number, status: string) => request(`/loans/${loanId}/${status === 'RETURNED' ? 'return' : 'status'}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   renewLoan: (loanId: number) => request(`/loans/${loanId}/renew`, { method: 'POST' }),
-  getLoans: (params?: Record<string, any>) => {
-    const query = new URLSearchParams(params as any).toString();
-    return request(`/loans?${query}`);
-  },
+  getLoans: (params?: Record<string, any>) => request(`/loans${cleanQuery(params)}`),
   reportLost: (loanId: number, data?: { type?: string; fineAmount?: number }) =>
     request(`/loans/${loanId}/lost`, { method: 'POST', body: JSON.stringify(data || {}) }),
 
   // Reservations
   createReservation: (bookId: number) => request('/reservations', { method: 'POST', body: JSON.stringify({ bookId }) }),
-  getReservations: (params?: Record<string, any>) => {
-    const query = new URLSearchParams(params as any).toString();
-    return request(`/reservations?${query}`);
-  },
+  getReservations: (params?: Record<string, any>) => request(`/reservations${cleanQuery(params)}`),
   cancelReservation: (id: number) => request(`/reservations/${id}/cancel`, { method: 'PATCH' }),
+  updateReservationStatus: (id: number, status: string) => request(`/reservations/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 
   // Fines
-  getFines: (params?: Record<string, any>) => {
-    const query = new URLSearchParams(params as any).toString();
-    return request(`/fines?${query}`);
-  },
+  getFines: (params?: Record<string, any>) => request(`/fines${cleanQuery(params)}`),
   payFine: (id: number) => request(`/fines/${id}/pay`, { method: 'PATCH' }),
   waiveFine: (id: number, reason?: string) => request(`/fines/${id}/waive`, { method: 'PATCH', body: JSON.stringify({ reason }) }),
 
